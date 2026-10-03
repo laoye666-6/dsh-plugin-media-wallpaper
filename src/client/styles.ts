@@ -74,36 +74,39 @@ body[data-wp-active] [data-wp-frame] {
 }
 
 /* ===== 表面质感：毛玻璃 / 液态玻璃 =====
-   作用于前景 UI 元素（输入框、新对话 hero、设置面板与卡片），
-   不作用于整片背景列——背景的模糊由壁纸自身的高斯模糊滑杆负责。
-   CSS Modules 类名保留原始局部名作后缀（如 _2WTFBq_bar），用 [class*=] 匹配。 */
-body[data-wp-active][data-wp-finish='frosted'] [class*="_composerHero"],
-body[data-wp-active][data-wp-finish='frosted'] [class*="_hero"],
-body[data-wp-active][data-wp-finish='frosted'] [class*="_bar"],
-body[data-wp-active][data-wp-finish='frosted'] [class*="_panel"],
-body[data-wp-active][data-wp-finish='frosted'] [class*="_card"] {
-  backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.4);
-  -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.4);
+   质感作用于前景 UI（输入框卡、新对话 hero、设置面板与卡片），不作用于整片背景列。
+   实现参照通用做法：质感主要是「令牌源头」的玻璃配方（见下方 layer-1/2/3 等），
+   类名哈希会随壳前端重建失效，故元素选择器只用于少数稳定锚点：
+   [data-composer-card] 为壳原生属性（构建可存活）；模糊由 ::before 伪元素承载，
+   伪元素没有 DOM 后代，不会成为 fixed 后代的包含块。 */
+body[data-wp-active][data-wp-finish='frosted'] [data-composer-card],
+body[data-wp-active][data-wp-finish='liquid'] [data-composer-card] {
+  position: relative;
 }
-/* 液态玻璃：更高饱和与亮度补偿的折射感 + 白色高光渐变与内描边 */
-body[data-wp-active][data-wp-finish='liquid'] [class*="_composerHero"],
-body[data-wp-active][data-wp-finish='liquid'] [class*="_hero"],
-body[data-wp-active][data-wp-finish='liquid'] [class*="_bar"],
-body[data-wp-active][data-wp-finish='liquid'] [class*="_panel"],
-body[data-wp-active][data-wp-finish='liquid'] [class*="_card"] {
-  backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.9) brightness(1.06) contrast(1.04);
-  -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.9) brightness(1.06) contrast(1.04);
+body[data-wp-active][data-wp-finish='frosted'] [data-composer-card]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.3);
+  -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.3);
+}
+/* 液态玻璃：输入框卡叠加折射感（更高饱和/亮度）与白色高光渐变、内描边 */
+body[data-wp-active][data-wp-finish='liquid'] [data-composer-card]::before {
+  backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.7) brightness(1.05);
+  -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.7) brightness(1.05);
+}
+body[data-wp-active][data-wp-finish='liquid'] [data-composer-card] {
   background-image: linear-gradient(
       135deg,
-      rgb(255 255 255 / 0.16),
-      rgb(255 255 255 / 0.04) 38%,
-      rgb(255 255 255 / 0.02) 62%,
-      rgb(255 255 255 / 0.12)
+      rgb(255 255 255 / 0.14),
+      rgb(255 255 255 / 0.03) 45%,
+      rgb(255 255 255 / 0.1)
     ) !important;
   box-shadow:
     inset 0 0 0 0.5px rgb(255 255 255 / 0.2),
-    inset 0 1px 0 rgb(255 255 255 / 0.12),
-    inset 0 -1px 0 rgb(255 255 255 / 0.05) !important;
+    inset 0 1px 0 rgb(255 255 255 / 0.12) !important;
 }
 
 /* ===== 逐组件"恢复不透明"（开关关闭时；打标为尽力而为，失败仅该区域保持透明） =====
@@ -125,26 +128,41 @@ body[data-wp-active]:not([data-wp-t-rightbar='1']) [data-rightbar-col] {
   background: var(--wp-base-solid) !important;
 }
 
-/* 卡片面板：改写 layer-1/2/3 语义别名（含暗色分支，基值取自 design-platform.css）。 */
-body[data-wp-active]:not([data-ds-dark-theme]) {
-  --wp-card-solid-1: var(--dsw-static-neutral-bluish-00, #fafbfc);
-  --wp-card-solid-2: var(--dsw-static-neutral-bluish-00, #fafbfc);
-  --wp-card-solid-3: var(--dsw-static-neutral-bluish-00, #fafbfc);
+/* ===== 玻璃配方（令牌源头接管，卡片面板开关联动） =====
+   参照通用做法：可读性地板（主题底色按固定权重合成在底层，玻璃色权重再高
+   也不会低于地板覆盖，亮/暗极端壁纸像素下文字仍可读；地板随表面不透明度
+   缩放，拖到 0 时完全透明）+ 玻璃色按层权重混合：
+   面板梯度 layer-1/2/3 = 0.9/1.0/1.1，抬高按钮（新建会话）= 1.15，
+   输入框卡（input-major）= 1.1，消息气泡（bubble）= 1.0。
+   设置卡 fill 链到 layer-2，自动生效。代码块底刻意不接管（shiki 配色可读性）。
+   暗色下玻璃色（白色釉面）权重按主题降档。 */
+body[data-wp-active] {
+  --wp-glass-a: calc(var(--wp-op) * 0.01);
+  --wp-glass-mult: 1;
+  --wp-floor: 0.2;
+  --wp-floor-eff: calc(var(--wp-floor) * var(--wp-op) * 0.01);
+  --wp-glass-tint: #ffffff;
 }
 body[data-wp-active][data-ds-dark-theme] {
-  --wp-card-solid-1: var(--dsw-static-neutral-bluish-875, #191a1f);
-  --wp-card-solid-2: var(--dsw-static-neutral-bluish-850, #1e1f25);
-  --wp-card-solid-3: var(--dsw-static-neutral-bluish-800, #26272e);
+  --wp-glass-mult: 0.45;
 }
-body[data-wp-active] {
-  --wp-card-1: color-mix(in srgb, color-mix(in srgb, var(--wp-tint) var(--wp-tint-mix), var(--wp-card-solid-1)) calc(var(--wp-op) * 1%), transparent);
-  --wp-card-2: color-mix(in srgb, color-mix(in srgb, var(--wp-tint) var(--wp-tint-mix), var(--wp-card-solid-2)) calc(var(--wp-op) * 1%), transparent);
-  --wp-card-3: color-mix(in srgb, color-mix(in srgb, var(--wp-tint) var(--wp-tint-mix), var(--wp-card-solid-3)) calc(var(--wp-op) * 1%), transparent);
+body[data-wp-active][data-wp-finish='liquid'] {
+  --wp-floor: 0.1;
+  --wp-glass-mult: 1.2;
+}
+body[data-wp-active][data-wp-finish='liquid'][data-ds-dark-theme] {
+  --wp-glass-mult: 0.6;
+}
+body[data-wp-active][data-wp-tint='1'] {
+  --wp-glass-tint: color-mix(in srgb, var(--wp-tint) var(--wp-tint-mix), #ffffff);
 }
 body[data-wp-active][data-wp-t-cards='1'] {
-  --dsw-alias-bg-layer-1: var(--wp-card-1) !important;
-  --dsw-alias-bg-layer-2: var(--wp-card-2) !important;
-  --dsw-alias-bg-layer-3: var(--wp-card-3) !important;
+  --dsw-alias-bg-layer-1: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 0.9 * var(--wp-glass-mult) * 100%), transparent) calc((1 - var(--wp-floor-eff)) * 100%)) !important;
+  --dsw-alias-bg-layer-2: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 1 * var(--wp-glass-mult) * 100%), transparent) calc((1 - var(--wp-floor-eff)) * 100%)) !important;
+  --dsw-alias-bg-layer-3: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 1.1 * var(--wp-glass-mult) * 100%), transparent) calc((1 - var(--wp-floor-eff)) * 100%)) !important;
+  --dsw-alias-button-elevated-fill: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 1.15 * var(--wp-glass-mult) * 100%), transparent) calc((1 - var(--wp-floor-eff)) * 100%)) !important;
+  --dsw-specific-input-major: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 1.1 * var(--wp-glass-mult) * 100%), transparent) calc((1 - var(--wp-floor-eff)) * 100%)) !important;
+  --dsw-specific-bubble: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 1 * var(--wp-glass-mult) * 100%), transparent) calc((1 - var(--wp-floor-eff)) * 100%)) !important;
 }
 
 /* 色调跟随：侧栏/右栏用负 z-index 叠层（画在自身背景之上、内容之下）。 */
