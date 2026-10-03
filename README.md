@@ -38,15 +38,16 @@ npm run smoke        # 可选：Node 最小 DOM 桩自检
 **方式一（推荐）：GitHub 一条指令安装**（任何机器，本机同样适用）：
 
 ```sh
-dsh plugin --profile <你的profile名> add github:laoye666-6/dsh-plugin-wallpaper
+dsh plugin --profile dshwallpaper add github:laoye666-6/dsh-plugin-wallpaper
+dsh --profile dshwallpaper   # 启动该组合
 ```
 
-关于 `<你的profile名>`（profile = DSH 的命名配置组合，位于 `$DSH_HOME/profiles/<名字>/`，决定启动时加载哪些 bundle）：
+关于 profile 名（示例用 `dshwallpaper`；profile = DSH 的命名配置组合，位于 `$DSH_HOME/profiles/<名字>/`，决定启动时加载哪些 bundle）：
 
-- 名字自己取，首次安装时不存在会自动创建（以 `@deepseek-ai/dsh-base` 初始化）；之后启动也用同名：`dsh --profile <名字>`
-- 自己命令启动：名字随便定，装和启用同名即可
-- 桌面版（Electron 壳）：用其启动参数/快捷方式里 `--profile` 后面的名字；不带该参数的用其默认 profile
-- 验证是否装对：`dsh --profile <名字> --dump-config`，输出出现 `# == dsh-plugin-wallpaper` 一层即成功
+- 名字自己取，首次安装时不存在会自动创建（以 `@deepseek-ai/dsh-base` 初始化）；之后启动也用同名
+- 自己命令启动：装和启用用同一个名字即可
+- 桌面版（Electron 壳）：若其启动参数/快捷方式带 `--profile xxx`，就用那个名字安装，保证插件装进壳实际使用的组合
+- 验证是否装对：`dsh --profile dshwallpaper --dump-config`，输出出现 `# == dsh-plugin-wallpaper` 一层即成功
 
 - 仓库内置预构建产物，拉取即用；插件无构建脚本，pnpm ≥ 10 亦无需授权（无需 allowBuilds）
 - 首次使用会自动初始化 profile（以 `@deepseek-ai/dsh-base` 为第一个组合包）
@@ -55,7 +56,7 @@ dsh plugin --profile <你的profile名> add github:laoye666-6/dsh-plugin-wallpap
 **方式二（本机开发路径）**：
 
 ```sh
-dsh plugin --profile <你的profile名> add "E:\Deepseek Harness\dsh-plugin-wallpaper"
+dsh plugin --profile dshwallpaper add "E:\Deepseek Harness\dsh-plugin-wallpaper"
 ```
 
 **方式三（开发调试，免安装）**：
