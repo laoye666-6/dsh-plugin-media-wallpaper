@@ -319,6 +319,12 @@ export function WallpaperSection(): ReactNode {
   )
 }
 
+/** 导航标签：语言跟随 thunk（设置外壳经 resolveSlotLabel 解析）。 */
+const sectionLabel = (): string =>
+  typeof document !== 'undefined' && document.documentElement.lang.toLowerCase().startsWith('zh')
+    ? '壁纸'
+    : 'Wallpaper'
+
 /** 注册双插槽入口；任一失败不影响另一处与壁纸主功能。 */
 export function registerSettingsSlots(ctx: ClientContext): void {
   const slots = ctx.slots
@@ -328,7 +334,7 @@ export function registerSettingsSlots(ctx: ClientContext): void {
   }
   try {
     slots.inject('settings.section', () =>
-      slots.register?.({ name: 'settings.section', id: PLUGIN_PKG, order: 860 }, WallpaperSection),
+      slots.register?.({ name: 'settings.section', id: PLUGIN_PKG, order: 860, label: sectionLabel }, WallpaperSection),
     )
   } catch (err) {
     console.warn('[dsh-plugin-wallpaper] settings.section registration failed', err)
@@ -336,7 +342,7 @@ export function registerSettingsSlots(ctx: ClientContext): void {
   try {
     slots.inject('plugins.detail.section', () =>
       slots.register?.(
-        { name: 'plugins.detail.section', id: PLUGIN_PKG, order: 60 },
+        { name: 'plugins.detail.section', id: PLUGIN_PKG, order: 60, label: sectionLabel },
         (props: SlotComponentProps) =>
           props?.subject?.kind === 'bundle' && props.subject.pkg === PLUGIN_PKG ? (
             <WallpaperSection />

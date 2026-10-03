@@ -45,23 +45,37 @@ body[data-wp-active] {
   --wp-op: 70;
   --wp-tint-mix: 0%;
   --wp-tint: transparent;
-  --wp-surface-fill: color-mix(in srgb, var(--dsw-specific-sidebar-fill) calc(var(--wp-op) * 1%), transparent);
+  /* 侧栏填充的原始静态值按主题冻结（design-platform.css：light=neutral-bluish-50, dark=neutral-bluish-900）。
+     不能直接引用 --dsw-specific-sidebar-fill：打标列上会重定义该 token，直接引用会形成循环。 */
+  --wp-sidebar-solid: var(--dsw-static-neutral-bluish-50, #f6f8fa);
+  /* 色调跟随直接烘进填充色（与卡片同法），对内部自绘组件透明生效 */
+  --wp-sidebar-tinted: color-mix(in srgb, var(--wp-tint) var(--wp-tint-mix), var(--wp-sidebar-solid));
+  --wp-surface-fill: color-mix(in srgb, var(--wp-sidebar-tinted) calc(var(--wp-op) * 1%), transparent);
+}
+body[data-wp-active][data-ds-dark-theme] {
+  --wp-sidebar-solid: var(--dsw-static-neutral-bluish-900, #1b1c22);
 }
 
 body[data-wp-active] [data-wp-frame] {
   background: transparent !important;
 }
+/* 侧栏：除列背景外，在列上重定义 --dsw-specific-sidebar-fill，
+   让列内自绘背景的组件（SidebarRoot 等）也级联到半透明值。 */
 body[data-wp-active][data-wp-t-sidebar='1'] [data-wp-sidebar] {
+  --dsw-specific-sidebar-fill: var(--wp-surface-fill);
   background: var(--wp-surface-fill) !important;
 }
 body[data-wp-active][data-wp-t-topbar='1'] [data-wp-frame]::before {
   background: var(--wp-surface-fill) !important;
 }
+/* 主内容 / 右栏：同法级联 --dsw-alias-bg-base，内部消费方一并放行。 */
 body[data-wp-active][data-wp-t-main='1'] [data-wp-center] {
+  --dsw-alias-bg-base: transparent;
   background: transparent !important;
 }
 /* 右栏与底部行有官方稳定属性，无需打标 */
 body[data-wp-active][data-wp-t-rightbar='1'] [data-rightbar-col] {
+  --dsw-alias-bg-base: transparent;
   background: transparent !important;
 }
 

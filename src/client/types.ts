@@ -14,6 +14,8 @@ export interface SlotDeclaration {
   id: string
   /** list 插槽排序，数值小者在前 */
   order?: number
+  /** 导航/列表展示文案；支持语言跟随 thunk（resolveSlotLabel 解析，locale 变化时自动重解析） */
+  label?: string | (() => string)
 }
 
 /** plugins.detail.section 条目渲染时收到的 subject。 */
