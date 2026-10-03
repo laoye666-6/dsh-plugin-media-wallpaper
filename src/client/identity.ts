@@ -4,5 +4,7 @@
  * 插槽条目 id 全部一致，改名只需改 package.json。
  */
 declare const __DSH_PLUGIN_PKG__: string
+declare const __DSH_PLUGIN_VERSION__: string
 
 export const PLUGIN_PKG: string = __DSH_PLUGIN_PKG__
+export const PLUGIN_VERSION: string = __DSH_PLUGIN_VERSION__

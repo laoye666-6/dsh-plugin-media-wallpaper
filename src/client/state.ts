@@ -61,8 +61,8 @@ export const DEFAULT_SETTINGS: WallpaperSettings = {
   transparent: {
     sidebar: true,
     topbar: true,
-    main: false,
-    rightbar: false,
+    main: true,
+    rightbar: true,
     cards: true,
   },
   surfaceOpacity: 70,

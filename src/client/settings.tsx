@@ -10,7 +10,7 @@
 import { useState, useSyncExternalStore } from 'react'
 import type { ReactNode, ChangeEvent } from 'react'
 import type { SlotComponentProps, ClientContext } from './types'
-import { PLUGIN_PKG } from './identity'
+import { PLUGIN_PKG, PLUGIN_VERSION } from './identity'
 import * as state from './state'
 import { ACCEPT_ATTR, detectFormat } from './format'
 import { putMedia, deleteMedia, currentObjectUrl } from './storage'
@@ -112,6 +112,24 @@ function onClear(): void {
   const prev = state.getSnapshot().mediaId
   if (prev) void deleteMedia(prev)
   state.set({ enabled: false, mediaId: null, mediaType: null, formatLabel: null, mediaName: null })
+}
+
+/** 诊断行：截图排查用。展示打标状态、实际解析出的列背景与全局填充值。 */
+function Diagnostics(): ReactNode {
+  const s = useSyncExternalStore(state.subscribe, state.getSnapshot)
+  const active = state.isActive(s)
+  let diag = '—'
+  try {
+    const q = (sel: string): boolean => document.querySelector(sel) !== null
+    const col = document.querySelector('[data-wp-sidebar]') ?? document.querySelector('[data-rightbar-col]')
+    const bg = col ? getComputedStyle(col).backgroundColor : 'n/a'
+    const fill = getComputedStyle(document.body).getPropertyValue('--dsw-specific-sidebar-fill').trim()
+    const fallback = document.body.hasAttribute('data-wp-fallback')
+    diag = `frame:${q('[data-wp-frame]') ? '✓' : '✗'} sidebar:${q('[data-wp-sidebar]') ? '✓' : '✗'} center:${q('[data-wp-center]') ? '✓' : '✗'} fallback:${fallback ? '✓' : '✗'} · bg=${bg} · fill=${fill.slice(0, 60) || '∅'}`
+  } catch {
+    diag = 'unavailable'
+  }
+  return <div className="wp-hint">v{PLUGIN_VERSION} · active:{active ? '1' : '0'} · {diag}</div>
 }
 
 export function WallpaperSection(): ReactNode {
@@ -315,6 +333,8 @@ export function WallpaperSection(): ReactNode {
           {t.reset}
         </button>
       </div>
+
+      <Diagnostics />
     </section>
   )
 }

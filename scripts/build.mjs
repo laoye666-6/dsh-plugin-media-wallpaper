@@ -18,8 +18,12 @@ const out = (p) => join(pkgRoot, p)
 
 // 包名唯一来源：package.json。经 define 注入两侧 bundle（src/client/identity.ts 消费），
 // 保证 npm 包名、__ModuleLoader__ 工厂 id、data-plugin 标记、插槽条目 id 完全一致。
-const PKG_ID = JSON.parse(readFileSync(out('package.json'), 'utf8')).name
-const PLUGIN_DEFINE = { __DSH_PLUGIN_PKG__: JSON.stringify(PKG_ID) }
+const pkg = JSON.parse(readFileSync(out('package.json'), 'utf8'))
+const PKG_ID = pkg.name
+const PLUGIN_DEFINE = {
+  __DSH_PLUGIN_PKG__: JSON.stringify(PKG_ID),
+  __DSH_PLUGIN_VERSION__: JSON.stringify(pkg.version),
+}
 
 // ---- Host 半侧 ----
 await build({
