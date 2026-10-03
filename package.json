@@ -32,7 +32,8 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "smoke": "node scripts/smoke.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "publish:api": "node scripts/publish-api.mjs"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",

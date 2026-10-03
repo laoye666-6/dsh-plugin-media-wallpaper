@@ -89,8 +89,10 @@ dsh web --patch "E:\Deepseek Harness\dsh-plugin-wallpaper\cordis.patch.yml"
 
 1. 修改代码 → `npm run build && npm run typecheck && npm run smoke`
 2. 提交（**必须包含更新后的 `lib/`**，git 安装用户拿到的是预构建产物）
-3. 推送并打版本标签：`git tag v0.1.0 && git push --tags`
-4. 建议用户以 commit SHA 或 tag 锁定安装
+3. 发布，二选一：
+   - 网络可达时：`git push origin main --tags`（首次远端为 API 引导的历史，需 `--force` 对齐为本地单提交历史）
+   - git push 不通（github.com:443 被阻断）时：`npm run publish:api -- "commit message"`，经 GitHub REST API 整树发布并以远端历史为父
+4. 安装端锁定版本建议：`github:laoye666-6/dsh-plugin-wallpaper#v0.1.0` 或 `#<commit-sha>`
 
 ## 目录结构
 
@@ -98,6 +100,7 @@ dsh web --patch "E:\Deepseek Harness\dsh-plugin-wallpaper\cordis.patch.yml"
 ├── package.json / cordis.patch.yml   # dsh.bundle + dsh.client 声明
 ├── scripts/build.mjs                 # esbuild 构建 + 官方懒 CJS 工厂包装
 ├── scripts/smoke.mjs                 # Node 桩自检（包装格式/装配/插槽/投影/清理）
+├── scripts/publish-api.mjs           # 经 GitHub REST API 发布（git push 被阻断时的替代通道）
 └── src/
     ├── index.ts                      # Host 半侧（空实现，纯客户端插件）
     └── client/
