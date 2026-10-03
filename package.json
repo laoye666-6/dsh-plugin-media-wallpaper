@@ -13,12 +13,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/laoye666-6/dsh-plugin-wallpaper.git"
+    "url": "git+https://github.com/laoye666-6/dsh-plugin-media-wallpaper.git"
   },
   "bugs": {
-    "url": "https://github.com/laoye666-6/dsh-plugin-wallpaper/issues"
+    "url": "https://github.com/laoye666-6/dsh-plugin-media-wallpaper/issues"
   },
-  "homepage": "https://github.com/laoye666-6/dsh-plugin-wallpaper#readme",
+  "homepage": "https://github.com/laoye666-6/dsh-plugin-media-wallpaper#readme",
   "main": "./lib/index.js",
   "exports": {
     ".": "./lib/index.js",

@@ -4,7 +4,7 @@ DeepSeek Harness（DSH）壁纸插件 —— 在 Web UI / 桌面版中更换图�
 
 **纯客户端插件**：零服务端逻辑，所有设置保存在浏览器本地（localStorage），壁纸文件保存在浏览器 IndexedDB（支持大体积视频）。官方 Web 版与各类桌面版（Electron 壳）行为完全一致。
 
-> 命名说明：npm 包名为 **`dsh-plugin-media-wallpaper`**（原名 `dsh-plugin-wallpaper` 已被他人占用）；GitHub 仓库名保持 `dsh-plugin-wallpaper` 不变。
+> 命名说明：npm 包名与 GitHub 仓库均为 **`dsh-plugin-media-wallpaper`**（npm 原名 `dsh-plugin-wallpaper` 已被他人占用，故改名）。
 
 ## 功能
 
@@ -47,12 +47,12 @@ dsh --profile dshwallpaper   # 启动该组合
 **方式二：GitHub 一条指令安装**（任何机器）：
 
 ```sh
-dsh plugin --profile dshwallpaper add github:laoye666-6/dsh-plugin-wallpaper
+dsh plugin --profile dshwallpaper add github:laoye666-6/dsh-plugin-media-wallpaper
 ```
 
 - 仓库内置预构建产物，拉取即用；插件无构建脚本，pnpm ≥ 10 亦无需授权（无需 allowBuilds）
 - 首次使用会自动初始化 profile（以 `@deepseek-ai/dsh-base` 为第一个组合包）
-- 安全建议：可锁定提交安装 —— `github:laoye666-6/dsh-plugin-wallpaper#<commit-sha>`
+- 安全建议：可锁定提交安装 —— `github:laoye666-6/dsh-plugin-media-wallpaper#<commit-sha>`
 
 **方式三（本机开发路径）**：
 
