@@ -73,30 +73,37 @@ body[data-wp-active] [data-wp-frame] {
   background: transparent !important;
 }
 
-/* ===== 表面质感：毛玻璃 / 液态玻璃（打标列上叠加 backdrop-filter，磨砂取自其后方的壁纸层） ===== */
-body[data-wp-active][data-wp-finish='frosted'] [data-wp-sidebar],
-body[data-wp-active][data-wp-finish='frosted'] [data-wp-center],
-body[data-wp-active][data-wp-finish='frosted'] [data-rightbar-col] {
+/* ===== 表面质感：毛玻璃 / 液态玻璃 =====
+   作用于前景 UI 元素（输入框、新对话 hero、设置面板与卡片），
+   不作用于整片背景列——背景的模糊由壁纸自身的高斯模糊滑杆负责。
+   CSS Modules 类名保留原始局部名作后缀（如 _2WTFBq_bar），用 [class*=] 匹配。 */
+body[data-wp-active][data-wp-finish='frosted'] [class*="_composerHero"],
+body[data-wp-active][data-wp-finish='frosted'] [class*="_hero"],
+body[data-wp-active][data-wp-finish='frosted'] [class*="_bar"],
+body[data-wp-active][data-wp-finish='frosted'] [class*="_panel"],
+body[data-wp-active][data-wp-finish='frosted'] [class*="_card"] {
   backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.4);
   -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.4);
 }
 /* 液态玻璃：更高饱和与亮度补偿的折射感 + 白色高光渐变与内描边 */
-body[data-wp-active][data-wp-finish='liquid'] [data-wp-sidebar],
-body[data-wp-active][data-wp-finish='liquid'] [data-wp-center],
-body[data-wp-active][data-wp-finish='liquid'] [data-rightbar-col] {
+body[data-wp-active][data-wp-finish='liquid'] [class*="_composerHero"],
+body[data-wp-active][data-wp-finish='liquid'] [class*="_hero"],
+body[data-wp-active][data-wp-finish='liquid'] [class*="_bar"],
+body[data-wp-active][data-wp-finish='liquid'] [class*="_panel"],
+body[data-wp-active][data-wp-finish='liquid'] [class*="_card"] {
   backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.9) brightness(1.06) contrast(1.04);
   -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.9) brightness(1.06) contrast(1.04);
   background-image: linear-gradient(
       135deg,
-      rgb(255 255 255 / 0.18),
-      rgb(255 255 255 / 0.05) 38%,
+      rgb(255 255 255 / 0.16),
+      rgb(255 255 255 / 0.04) 38%,
       rgb(255 255 255 / 0.02) 62%,
-      rgb(255 255 255 / 0.14)
+      rgb(255 255 255 / 0.12)
     ) !important;
   box-shadow:
-    inset 0 0 0 0.5px rgb(255 255 255 / 0.22),
-    inset 0 1px 0 rgb(255 255 255 / 0.14),
-    inset 0 -1px 0 rgb(255 255 255 / 0.06) !important;
+    inset 0 0 0 0.5px rgb(255 255 255 / 0.2),
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    inset 0 -1px 0 rgb(255 255 255 / 0.05) !important;
 }
 
 /* ===== 逐组件"恢复不透明"（开关关闭时；打标为尽力而为，失败仅该区域保持透明） =====
@@ -104,8 +111,6 @@ body[data-wp-active][data-wp-finish='liquid'] [data-rightbar-col] {
 body[data-wp-active]:not([data-wp-t-sidebar='1']) [data-wp-sidebar] {
   --dsw-specific-sidebar-fill: var(--wp-sidebar-solid) !important;
   background: var(--wp-sidebar-solid) !important;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 body[data-wp-active]:not([data-wp-t-topbar='1']) [data-wp-frame]::before {
   background: var(--wp-sidebar-solid) !important;
@@ -113,15 +118,11 @@ body[data-wp-active]:not([data-wp-t-topbar='1']) [data-wp-frame]::before {
 body[data-wp-active]:not([data-wp-t-main='1']) [data-wp-center] {
   --dsw-alias-bg-base: var(--wp-base-solid) !important;
   background: var(--wp-base-solid) !important;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 /* 右栏有官方稳定属性 data-rightbar-col，无需打标 */
 body[data-wp-active]:not([data-wp-t-rightbar='1']) [data-rightbar-col] {
   --dsw-alias-bg-base: var(--wp-base-solid) !important;
   background: var(--wp-base-solid) !important;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 
 /* 卡片面板：改写 layer-1/2/3 语义别名（含暗色分支，基值取自 design-platform.css）。 */

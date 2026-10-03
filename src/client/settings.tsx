@@ -39,6 +39,7 @@ const STR = {
     finishFrosted: '毛玻璃',
     finishLiquid: '液态玻璃',
     frostStrength: '玻璃强度',
+    finishHint: '作用于输入框、新对话与设置面板等前景 UI；背景模糊请用高斯模糊滑杆',
     transparency: '组件透明化',
     tSidebar: '侧栏',
     tTopbar: '顶栏 / 标题栏',
@@ -74,6 +75,7 @@ const STR = {
     finishFrosted: 'Frosted glass',
     finishLiquid: 'Liquid glass',
     frostStrength: 'Glass strength',
+    finishHint: 'Applies to composer, hero and settings panels; use Gaussian blur for the background',
     transparency: 'Component transparency',
     tSidebar: 'Sidebar',
     tTopbar: 'Top bar / title bar',
@@ -288,19 +290,22 @@ export function WallpaperSection(): ReactNode {
           </select>
         </div>
         {s.finish !== 'none' ? (
-          <div className="wp-range-row">
-            <span>{t.frostStrength}</span>
-            <input
-              className="wp-range"
-              type="range"
-              min={4}
-              max={30}
-              step={2}
-              value={s.frostStrength}
-              onChange={(e) => state.set({ frostStrength: Number(e.target.value) })}
-            />
-            <span className="wp-value">{s.frostStrength}px</span>
-          </div>
+          <>
+            <div className="wp-range-row">
+              <span>{t.frostStrength}</span>
+              <input
+                className="wp-range"
+                type="range"
+                min={4}
+                max={30}
+                step={2}
+                value={s.frostStrength}
+                onChange={(e) => state.set({ frostStrength: Number(e.target.value) })}
+              />
+              <span className="wp-value">{s.frostStrength}px</span>
+            </div>
+            <div className="wp-hint">{t.finishHint}</div>
+          </>
         ) : null}
       </div>
 
