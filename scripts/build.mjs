@@ -8,7 +8,7 @@
  *    external 仅取自平台冻结模块表（web/src/seed.ts）：react / react/jsx-runtime。
  */
 import { build } from 'esbuild'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -16,7 +16,10 @@ const root = dirname(fileURLToPath(import.meta.url))
 const pkgRoot = join(root, '..')
 const out = (p) => join(pkgRoot, p)
 
-const PKG_ID = 'dsh-plugin-wallpaper'
+// 包名唯一来源：package.json。经 define 注入两侧 bundle（src/client/identity.ts 消费），
+// 保证 npm 包名、__ModuleLoader__ 工厂 id、data-plugin 标记、插槽条目 id 完全一致。
+const PKG_ID = JSON.parse(readFileSync(out('package.json'), 'utf8')).name
+const PLUGIN_DEFINE = { __DSH_PLUGIN_PKG__: JSON.stringify(PKG_ID) }
 
 // ---- Host 半侧 ----
 await build({
@@ -25,7 +28,8 @@ await build({
   format: 'esm',
   platform: 'node',
   target: 'node18',
-  bundle: false,
+  bundle: true,
+  define: PLUGIN_DEFINE,
   sourcemap: false,
   charset: 'utf8',
   logLevel: 'info',
@@ -40,7 +44,7 @@ const client = await build({
   target: 'es2022',
   jsx: 'automatic',
   external: ['react', 'react/jsx-runtime'],
-  define: { 'process.env.NODE_ENV': '"production"' },
+  define: { 'process.env.NODE_ENV': '"production"', ...PLUGIN_DEFINE },
   write: false,
   charset: 'utf8',
   legalComments: 'none',

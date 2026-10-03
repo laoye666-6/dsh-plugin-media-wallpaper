@@ -1,8 +1,10 @@
-# dsh-plugin-wallpaper
+# dsh-plugin-media-wallpaper
 
 DeepSeek Harness（DSH）壁纸插件 —— 在 Web UI / 桌面版中更换图片或视频背景。
 
 **纯客户端插件**：零服务端逻辑，所有设置保存在浏览器本地（localStorage），壁纸文件保存在浏览器 IndexedDB（支持大体积视频）。官方 Web 版与各类桌面版（Electron 壳）行为完全一致。
+
+> 命名说明：npm 包名为 **`dsh-plugin-media-wallpaper`**（原名 `dsh-plugin-wallpaper` 已被他人占用）；GitHub 仓库名保持 `dsh-plugin-wallpaper` 不变。
 
 ## 功能
 
@@ -35,11 +37,33 @@ npm run smoke        # 可选：Node 最小 DOM 桩自检
 
 ## 安装到 DSH
 
-**方式一（推荐）：GitHub 一条指令安装**（任何机器，本机同样适用）：
+**方式一（推荐，国内网络）：npm 源安装** —— 自动走你配置的镜像（如 npmmirror.com），不触碰 GitHub：
+
+```sh
+dsh plugin --profile dshwallpaper add dsh-plugin-media-wallpaper
+dsh --profile dshwallpaper   # 启动该组合
+```
+
+**方式二：GitHub 一条指令安装**（任何机器）：
 
 ```sh
 dsh plugin --profile dshwallpaper add github:laoye666-6/dsh-plugin-wallpaper
-dsh --profile dshwallpaper   # 启动该组合
+```
+
+- 仓库内置预构建产物，拉取即用；插件无构建脚本，pnpm ≥ 10 亦无需授权（无需 allowBuilds）
+- 首次使用会自动初始化 profile（以 `@deepseek-ai/dsh-base` 为第一个组合包）
+- 安全建议：可锁定提交安装 —— `github:laoye666-6/dsh-plugin-wallpaper#<commit-sha>`
+
+**方式三（本机开发路径）**：
+
+```sh
+dsh plugin --profile dshwallpaper add "E:\Deepseek Harness\dsh-plugin-wallpaper"
+```
+
+**方式四（开发调试，免安装）**：
+
+```sh
+dsh web --patch "E:\Deepseek Harness\dsh-plugin-wallpaper\cordis.patch.yml"
 ```
 
 关于 profile 名（示例用 `dshwallpaper`；profile = DSH 的命名配置组合，位于 `$DSH_HOME/profiles/<名字>/`，决定启动时加载哪些 bundle）：
@@ -47,23 +71,7 @@ dsh --profile dshwallpaper   # 启动该组合
 - 名字自己取，首次安装时不存在会自动创建（以 `@deepseek-ai/dsh-base` 初始化）；之后启动也用同名
 - 自己命令启动：装和启用用同一个名字即可
 - 桌面版（Electron 壳）：若其启动参数/快捷方式带 `--profile xxx`，就用那个名字安装，保证插件装进壳实际使用的组合
-- 验证是否装对：`dsh --profile dshwallpaper --dump-config`，输出出现 `# == dsh-plugin-wallpaper` 一层即成功
-
-- 仓库内置预构建产物，拉取即用；插件无构建脚本，pnpm ≥ 10 亦无需授权（无需 allowBuilds）
-- 首次使用会自动初始化 profile（以 `@deepseek-ai/dsh-base` 为第一个组合包）
-- 安全建议：可锁定提交安装 —— `github:laoye666-6/dsh-plugin-wallpaper#<commit-sha>`
-
-**方式二（本机开发路径）**：
-
-```sh
-dsh plugin --profile dshwallpaper add "E:\Deepseek Harness\dsh-plugin-wallpaper"
-```
-
-**方式三（开发调试，免安装）**：
-
-```sh
-dsh web --patch "E:\Deepseek Harness\dsh-plugin-wallpaper\cordis.patch.yml"
-```
+- 验证是否装对：`dsh --profile dshwallpaper --dump-config`，输出出现 `# == dsh-plugin-media-wallpaper` 一层即成功
 
 安装后重启 `dsh web` 或桌面版客户端。
 
@@ -97,10 +105,10 @@ dsh web --patch "E:\Deepseek Harness\dsh-plugin-wallpaper\cordis.patch.yml"
 
 1. 修改代码 → `npm run build && npm run typecheck && npm run smoke`
 2. 提交（**必须包含更新后的 `lib/`**，git 安装用户拿到的是预构建产物）
-3. 发布，二选一：
-   - 网络可达时：`git push origin main --tags`（首次远端为 API 引导的历史，需 `--force` 对齐为本地单提交历史）
-   - git push 不通（github.com:443 被阻断）时：`npm run publish:api -- "commit message"`，经 GitHub REST API 整树发布并以远端历史为父
-4. 安装端锁定版本建议：`github:laoye666-6/dsh-plugin-wallpaper#v0.1.0` 或 `#<commit-sha>`
+3. 发布，按渠道：
+   - **npm（国内推荐渠道）**：`npm login` 后执行 `npm publish`；npmmirror 会自动同步（也可 `curl -X PUT https://registry.npmmirror.com/-/package/dsh-plugin-media-wallpaper/syncs` 催一下）
+   - **GitHub**：网络可达时 `git push origin main --tags`（首次远端为 API 引导的历史，需 `--force` 对齐）；git push 不通时 `npm run publish:api -- "commit message"` 经 REST API 整树发布
+4. 安装端锁定版本建议：npm 固定 `dsh-plugin-media-wallpaper@<version>`；GitHub 固定 `#<commit-sha>`
 
 ## 目录结构
 

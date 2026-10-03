@@ -9,7 +9,9 @@
  * !important 用于压过 theme-presenter 写在 body 上的内联 token。
  */
 
-export const STYLE_PLUGIN_ID = 'dsh-plugin-wallpaper'
+import { PLUGIN_PKG } from './identity'
+
+export const STYLE_PLUGIN_ID = PLUGIN_PKG
 
 export const GLOBAL_CSS = /* css */ `
 /* ===== 壁纸层 ===== */

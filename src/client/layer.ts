@@ -11,8 +11,9 @@
 
 import type { FillMode, WallpaperSettings } from './state'
 import { isActive } from './state'
+import { PLUGIN_PKG } from './identity'
 
-export const LAYER_PLUGIN_ID = 'dsh-plugin-wallpaper'
+export const LAYER_PLUGIN_ID = PLUGIN_PKG
 
 let layer: HTMLDivElement | null = null
 let media: HTMLDivElement | null = null

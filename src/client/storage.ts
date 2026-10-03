@@ -11,7 +11,7 @@ export interface MediaRecord {
   addedAt: number
 }
 
-const DB_NAME = 'dsh-plugin-wallpaper'
+const DB_NAME = 'dsh-plugin-media-wallpaper'
 const STORE = 'media'
 const DB_VERSION = 1
 

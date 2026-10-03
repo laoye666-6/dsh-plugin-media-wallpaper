@@ -11,6 +11,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
+const PKG = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).name
 const assert = (cond, msg) => {
   if (!cond) {
     console.error(`[smoke] FAIL: ${msg}`)
@@ -22,8 +23,9 @@ const assert = (cond, msg) => {
 
 // ---- 1/2/3: 执行客户端 bundle ----
 const code = readFileSync(join(root, 'lib/client.js'), 'utf8')
-assert(code.startsWith('window.__ModuleLoader__.load({ id: \'dsh-plugin-wallpaper\', factory: (require) => {'), '客户端 bundle 以官方 __ModuleLoader__ 包装开头')
+assert(code.startsWith(`window.__ModuleLoader__.load({ id: '${PKG}', factory: (require) => {`), `客户端 bundle 以官方 __ModuleLoader__ 包装开头（id=${PKG}）`)
 assert(code.trimEnd().endsWith('return module.exports;\n} });'), '客户端 bundle 以官方包装结尾')
+assert(!code.includes("'dsh-plugin-wallpaper'") && !code.includes('"dsh-plugin-wallpaper"'), '包名统一：bundle 内无旧名残留')
 
 const registrations = []
 const windowStub = { __ModuleLoader__: { load: (reg) => registrations.push(reg) } }
@@ -43,7 +45,7 @@ assert(registrations.length === 1, '工厂恰好注册一次')
 
 const exportsObj = registrations[0].factory(requireStub)
 assert(requiredModules.size === 2 && requiredModules.has('react') && requiredModules.has('react/jsx-runtime'), 'external 仅请求冻结表内模块')
-assert(exportsObj.name === 'dsh-plugin-wallpaper', '导出 name')
+assert(exportsObj.name === PKG, '导出 name（与 package.json 一致）')
 assert(Array.isArray(exportsObj.inject) && exportsObj.inject.includes('slots'), '导出 inject = [slots]')
 assert(typeof exportsObj.apply === 'function', '导出 apply')
 
@@ -119,14 +121,14 @@ const seed = {
 }
 globalThis.document = documentStub
 globalThis.localStorage = {
-  getItem: (k) => (k === 'dsh-plugin-wallpaper.settings.v1' ? JSON.stringify(seed) : null),
+  getItem: (k) => (k === 'dsh-plugin-media-wallpaper.settings.v1' ? JSON.stringify(seed) : null),
   setItem: () => {},
   removeItem: () => {},
 }
 
 exportsObj.apply(ctxStub)
 
-assert(documentStub.head.children.some((c) => c.attributes.get('data-plugin') === 'dsh-plugin-wallpaper'), '样式注入并带 data-plugin 归属标记')
+assert(documentStub.head.children.some((c) => c.attributes.get('data-plugin') === PKG), '样式注入并带 data-plugin 归属标记')
 assert(body.children.some((c) => c.attributes.has('data-wp-layer')), '壁纸层挂载到 body')
 const wpLayer = body.children.find((c) => c.attributes.has('data-wp-layer'))
 assert(!!wpLayer && wpLayer.children.some((c) => c.attributes.has('data-wp-media')) && wpLayer.children.some((c) => c.attributes.has('data-wp-dim')), '壁纸层含媒体/压暗子层')
@@ -146,6 +148,6 @@ assert(!body.attributes.has('data-wp-active'), '卸载后清除激活属性')
 
 // ---- 5: Host 半侧 ----
 const host = await import(pathToFileURL(join(root, 'lib/index.js')).href)
-assert(host.name === 'dsh-plugin-wallpaper' && typeof host.apply === 'function', 'Host 半侧导出 name/apply')
+assert(host.name === PKG && typeof host.apply === 'function', 'Host 半侧导出 name/apply')
 
 console.log(process.exitCode ? '[smoke] FAILED' : '[smoke] ALL PASSED')

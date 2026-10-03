@@ -14,6 +14,7 @@
  */
 
 import type { ClientContext } from './types'
+import { PLUGIN_PKG } from './identity'
 import * as state from './state'
 import { getMedia, takeObjectUrl, releaseObjectUrl } from './storage'
 import * as layer from './layer'
@@ -22,7 +23,7 @@ import * as palette from './palette'
 import { injectStyles } from './styles'
 import { registerSettingsSlots } from './settings'
 
-export const name = 'dsh-plugin-wallpaper'
+export const name = PLUGIN_PKG
 export const inject = ['slots']
 
 let unsubscribe: (() => void) | null = null

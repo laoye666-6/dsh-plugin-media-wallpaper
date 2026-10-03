@@ -10,6 +10,7 @@
 import { useState, useSyncExternalStore } from 'react'
 import type { ReactNode, ChangeEvent } from 'react'
 import type { SlotComponentProps, ClientContext } from './types'
+import { PLUGIN_PKG } from './identity'
 import * as state from './state'
 import { ACCEPT_ATTR, detectFormat } from './format'
 import { putMedia, deleteMedia, currentObjectUrl } from './storage'
@@ -327,7 +328,7 @@ export function registerSettingsSlots(ctx: ClientContext): void {
   }
   try {
     slots.inject('settings.section', () =>
-      slots.register?.({ name: 'settings.section', id: 'dsh-plugin-wallpaper', order: 860 }, WallpaperSection),
+      slots.register?.({ name: 'settings.section', id: PLUGIN_PKG, order: 860 }, WallpaperSection),
     )
   } catch (err) {
     console.warn('[dsh-plugin-wallpaper] settings.section registration failed', err)
@@ -335,9 +336,9 @@ export function registerSettingsSlots(ctx: ClientContext): void {
   try {
     slots.inject('plugins.detail.section', () =>
       slots.register?.(
-        { name: 'plugins.detail.section', id: 'dsh-plugin-wallpaper', order: 60 },
+        { name: 'plugins.detail.section', id: PLUGIN_PKG, order: 60 },
         (props: SlotComponentProps) =>
-          props?.subject?.kind === 'bundle' && props.subject.pkg === 'dsh-plugin-wallpaper' ? (
+          props?.subject?.kind === 'bundle' && props.subject.pkg === PLUGIN_PKG ? (
             <WallpaperSection />
           ) : null,
       ),

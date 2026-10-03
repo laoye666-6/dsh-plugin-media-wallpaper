@@ -68,7 +68,7 @@ export const DEFAULT_SETTINGS: WallpaperSettings = {
   surfaceOpacity: 70,
 }
 
-const STORAGE_KEY = 'dsh-plugin-wallpaper.settings.v1'
+const STORAGE_KEY = 'dsh-plugin-media-wallpaper.settings.v1'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
