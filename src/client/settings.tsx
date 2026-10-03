@@ -315,7 +315,7 @@ export function WallpaperSection(): ReactNode {
           <input
             className="wp-range"
             type="range"
-            min={30}
+            min={0}
             max={100}
             step={5}
             value={s.surfaceOpacity}

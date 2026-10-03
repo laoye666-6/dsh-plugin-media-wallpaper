@@ -101,7 +101,7 @@ function revive(raw: unknown): WallpaperSettings {
     base.transparent.rightbar = bool(raw.transparent.rightbar, base.transparent.rightbar)
     base.transparent.cards = bool(raw.transparent.cards, base.transparent.cards)
   }
-  base.surfaceOpacity = num(raw.surfaceOpacity, base.surfaceOpacity, 30, 100)
+  base.surfaceOpacity = num(raw.surfaceOpacity, base.surfaceOpacity, 0, 100)
   return base
 }
 
