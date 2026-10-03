@@ -57,9 +57,11 @@ body[data-wp-active] {
 
   /* ===== 全局语义 token 重定义（核心机制，不依赖 DOM 打标） =====
      在 body 上重定义，所有消费方（AppFrame 各列、SidebarRoot 等）经继承级联
-     自动变半透明；即使结构识别失败也保证壁纸可见。 */
-  --dsw-specific-sidebar-fill: var(--wp-surface-fill);
-  --dsw-alias-bg-base: transparent;
+     自动变半透明；即使结构识别失败也保证壁纸可见。
+     !important 必须保留：主题包在 body[data-ds-dark-theme]（同特异性）上定义
+     暗色值，且 theme-presenter 会内联写 token——不加会被暗色模式压回不透明。 */
+  --dsw-specific-sidebar-fill: var(--wp-surface-fill) !important;
+  --dsw-alias-bg-base: transparent !important;
 }
 
 body[data-wp-active][data-ds-dark-theme] {
@@ -71,22 +73,55 @@ body[data-wp-active] [data-wp-frame] {
   background: transparent !important;
 }
 
-/* ===== 逐组件"恢复不透明"（开关关闭时；打标为尽力而为，失败仅该区域保持透明） ===== */
+/* ===== 表面质感：毛玻璃 / 液态玻璃（打标列上叠加 backdrop-filter，磨砂取自其后方的壁纸层） ===== */
+body[data-wp-active][data-wp-finish='frosted'] [data-wp-sidebar],
+body[data-wp-active][data-wp-finish='frosted'] [data-wp-center],
+body[data-wp-active][data-wp-finish='frosted'] [data-rightbar-col] {
+  backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.4);
+}
+/* 液态玻璃：更高饱和与亮度补偿的折射感 + 白色高光渐变与内描边 */
+body[data-wp-active][data-wp-finish='liquid'] [data-wp-sidebar],
+body[data-wp-active][data-wp-finish='liquid'] [data-wp-center],
+body[data-wp-active][data-wp-finish='liquid'] [data-rightbar-col] {
+  backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.9) brightness(1.06) contrast(1.04);
+  -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.9) brightness(1.06) contrast(1.04);
+  background-image: linear-gradient(
+      135deg,
+      rgb(255 255 255 / 0.18),
+      rgb(255 255 255 / 0.05) 38%,
+      rgb(255 255 255 / 0.02) 62%,
+      rgb(255 255 255 / 0.14)
+    ) !important;
+  box-shadow:
+    inset 0 0 0 0.5px rgb(255 255 255 / 0.22),
+    inset 0 1px 0 rgb(255 255 255 / 0.14),
+    inset 0 -1px 0 rgb(255 255 255 / 0.06) !important;
+}
+
+/* ===== 逐组件"恢复不透明"（开关关闭时；打标为尽力而为，失败仅该区域保持透明） =====
+   token 重定义同样带 !important：元素级 !important 在级联上仍胜过 body 级 !important。 */
 body[data-wp-active]:not([data-wp-t-sidebar='1']) [data-wp-sidebar] {
-  --dsw-specific-sidebar-fill: var(--wp-sidebar-solid);
+  --dsw-specific-sidebar-fill: var(--wp-sidebar-solid) !important;
   background: var(--wp-sidebar-solid) !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 body[data-wp-active]:not([data-wp-t-topbar='1']) [data-wp-frame]::before {
   background: var(--wp-sidebar-solid) !important;
 }
 body[data-wp-active]:not([data-wp-t-main='1']) [data-wp-center] {
-  --dsw-alias-bg-base: var(--wp-base-solid);
+  --dsw-alias-bg-base: var(--wp-base-solid) !important;
   background: var(--wp-base-solid) !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 /* 右栏有官方稳定属性 data-rightbar-col，无需打标 */
 body[data-wp-active]:not([data-wp-t-rightbar='1']) [data-rightbar-col] {
-  --dsw-alias-bg-base: var(--wp-base-solid);
+  --dsw-alias-bg-base: var(--wp-base-solid) !important;
   background: var(--wp-base-solid) !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* 卡片面板：改写 layer-1/2/3 语义别名（含暗色分支，基值取自 design-platform.css）。 */

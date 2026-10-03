@@ -39,17 +39,10 @@ function isElement(v: unknown): v is HTMLElement {
   )
 }
 
-/** 尝试定位并打标 AppFrame；成功返回 true。 */
-function retag(): boolean {
-  if (typeof document === 'undefined') return false
-  const anchor = document.querySelector('[data-shell-overlay], [data-shell-bottom]')
-  const frame = anchor?.parentElement
-  if (!isElement(frame)) return false
-
-  const right = frame.querySelector(':scope > [data-rightbar-col]')
-
-  const flowChildren: HTMLElement[] = []
-  for (const child of frame.children) {
+/** 收集容器的"流内子列"：排除官方锚点元素与拖拽手柄等绝对定位小条。 */
+function flowColumns(container: HTMLElement, right: Element | null): HTMLElement[] {
+  const out: HTMLElement[] = []
+  for (const child of container.children) {
     if (!isElement(child)) continue
     if (
       child.hasAttribute('data-shell-overlay') ||
@@ -61,13 +54,35 @@ function retag(): boolean {
     }
     // 过滤拖拽手柄等 8px 绝对定位小条
     if (child.offsetWidth < 24 && getComputedStyleSafe(child) === 'absolute') continue
-    flowChildren.push(child)
+    out.push(child)
   }
-  if (flowChildren.length < 2) return false
+  return out
+}
 
-  flowChildren.sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left)
-  const sidebar = flowChildren[0]!
-  const center = flowChildren[1]!
+/** 尝试定位并打标 AppFrame；成功返回 true。 */
+function retag(): boolean {
+  if (typeof document === 'undefined') return false
+  const anchor = document.querySelector('[data-shell-overlay], [data-shell-bottom]')
+  const frame = anchor?.parentElement
+  if (!isElement(frame)) return false
+
+  const right = frame.querySelector(':scope > [data-rightbar-col]')
+  let cols = flowColumns(frame, right)
+  if (cols.length < 2) {
+    // rc.2 的 AppFrame 为行包装结构：列在下一层容器里，下降一层重找
+    for (const wrapper of cols) {
+      const sub = flowColumns(wrapper, wrapper.querySelector(':scope > [data-rightbar-col]'))
+      if (sub.length >= 2) {
+        cols = sub
+        break
+      }
+    }
+  }
+  if (cols.length < 2) return false
+
+  cols.sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left)
+  const sidebar = cols[0]!
+  const center = cols[1]!
 
   clearTags()
   frame.setAttribute('data-wp-frame', '')
@@ -175,6 +190,8 @@ export function applySettings(s: WallpaperSettings): void {
   const body = document.body
   if (!isActive(s)) {
     body.removeAttribute('data-wp-active')
+    body.removeAttribute('data-wp-finish')
+    body.style.removeProperty('--wp-frost')
     return
   }
   body.setAttribute('data-wp-active', '')
@@ -185,6 +202,8 @@ export function applySettings(s: WallpaperSettings): void {
   body.setAttribute('data-wp-t-rightbar', t.rightbar ? '1' : '0')
   body.setAttribute('data-wp-t-cards', t.cards ? '1' : '0')
   body.setAttribute('data-wp-tint', s.tintFollow ? '1' : '0')
+  body.setAttribute('data-wp-finish', s.finish)
+  body.style.setProperty('--wp-frost', `${Math.round(s.frostStrength)}px`)
 
   // 系统级"减弱透明度"偏好：把不透明度抬到 90 以上，尊重可达性设置
   const reduced = safeMatchMedia('(prefers-reduced-transparency: reduce)')?.matches ?? false

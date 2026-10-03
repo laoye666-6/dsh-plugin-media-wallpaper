@@ -34,6 +34,11 @@ const STR = {
     dim: '压暗',
     tint: '界面色调跟随背景',
     tintStrength: '色调强度',
+    finish: '表面质感',
+    finishNone: '无',
+    finishFrosted: '毛玻璃',
+    finishLiquid: '液态玻璃',
+    frostStrength: '玻璃强度',
     transparency: '组件透明化',
     tSidebar: '侧栏',
     tTopbar: '顶栏 / 标题栏',
@@ -64,6 +69,11 @@ const STR = {
     dim: 'Dim',
     tint: 'Tint UI with background color',
     tintStrength: 'Tint strength',
+    finish: 'Surface finish',
+    finishNone: 'None',
+    finishFrosted: 'Frosted glass',
+    finishLiquid: 'Liquid glass',
+    frostStrength: 'Glass strength',
     transparency: 'Component transparency',
     tSidebar: 'Sidebar',
     tTopbar: 'Top bar / title bar',
@@ -262,6 +272,34 @@ export function WallpaperSection(): ReactNode {
               onChange={(e) => state.set({ tintStrength: Number(e.target.value) })}
             />
             <span className="wp-value">{s.tintStrength}%</span>
+          </div>
+        ) : null}
+
+        <div className="wp-row">
+          <span>{t.finish}</span>
+          <select
+            className="wp-select"
+            value={s.finish}
+            onChange={(e) => state.set({ finish: e.target.value as state.SurfaceFinish })}
+          >
+            <option value="none">{t.finishNone}</option>
+            <option value="frosted">{t.finishFrosted}</option>
+            <option value="liquid">{t.finishLiquid}</option>
+          </select>
+        </div>
+        {s.finish !== 'none' ? (
+          <div className="wp-range-row">
+            <span>{t.frostStrength}</span>
+            <input
+              className="wp-range"
+              type="range"
+              min={4}
+              max={30}
+              step={2}
+              value={s.frostStrength}
+              onChange={(e) => state.set({ frostStrength: Number(e.target.value) })}
+            />
+            <span className="wp-value">{s.frostStrength}px</span>
           </div>
         ) : null}
       </div>

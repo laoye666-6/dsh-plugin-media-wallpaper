@@ -5,6 +5,8 @@
 
 export type FillMode = 'cover' | 'contain' | 'fill' | 'tile'
 export type MediaType = 'image' | 'video'
+/** 表面质感：无 / 毛玻璃 / 液态玻璃（作用于侧栏、主内容、右栏的打标列） */
+export type SurfaceFinish = 'none' | 'frosted' | 'liquid'
 
 /** 逐组件透明开关（对应 AppFrame 各列与卡片面板 token）。 */
 export interface TransparencyToggles {
@@ -40,6 +42,10 @@ export interface WallpaperSettings {
   tintFollow: boolean
   /** 色调混入强度百分比（0–50） */
   tintStrength: number
+  /** 表面质感 */
+  finish: SurfaceFinish
+  /** 玻璃模糊强度 px（4–30，毛玻璃/液态玻璃共用） */
+  frostStrength: number
   /** 逐组件透明开关 */
   transparent: TransparencyToggles
   /** 透明表面的不透明度百分比（30–100，数值越小越透明） */
@@ -58,6 +64,8 @@ export const DEFAULT_SETTINGS: WallpaperSettings = {
   dim: 25,
   tintFollow: false,
   tintStrength: 18,
+  finish: 'frosted',
+  frostStrength: 14,
   transparent: {
     sidebar: true,
     topbar: true,
@@ -94,6 +102,8 @@ function revive(raw: unknown): WallpaperSettings {
   base.dim = num(raw.dim, base.dim, 0, 90)
   base.tintFollow = bool(raw.tintFollow, base.tintFollow)
   base.tintStrength = num(raw.tintStrength, base.tintStrength, 0, 50)
+  base.finish = raw.finish === 'frosted' || raw.finish === 'liquid' || raw.finish === 'none' ? raw.finish : base.finish
+  base.frostStrength = num(raw.frostStrength, base.frostStrength, 4, 30)
   if (isRecord(raw.transparent)) {
     base.transparent.sidebar = bool(raw.transparent.sidebar, base.transparent.sidebar)
     base.transparent.topbar = bool(raw.transparent.topbar, base.transparent.topbar)
