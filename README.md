@@ -41,6 +41,13 @@ npm run smoke        # 可选：Node 最小 DOM 桩自检
 dsh plugin --profile <你的profile名> add github:laoye666-6/dsh-plugin-wallpaper
 ```
 
+关于 `<你的profile名>`（profile = DSH 的命名配置组合，位于 `$DSH_HOME/profiles/<名字>/`，决定启动时加载哪些 bundle）：
+
+- 名字自己取，首次安装时不存在会自动创建（以 `@deepseek-ai/dsh-base` 初始化）；之后启动也用同名：`dsh --profile <名字>`
+- 自己命令启动：名字随便定，装和启用同名即可
+- 桌面版（Electron 壳）：用其启动参数/快捷方式里 `--profile` 后面的名字；不带该参数的用其默认 profile
+- 验证是否装对：`dsh --profile <名字> --dump-config`，输出出现 `# == dsh-plugin-wallpaper` 一层即成功
+
 - 仓库内置预构建产物，拉取即用；插件无构建脚本，pnpm ≥ 10 亦无需授权（无需 allowBuilds）
 - 首次使用会自动初始化 profile（以 `@deepseek-ai/dsh-base` 为第一个组合包）
 - 安全建议：可锁定提交安装 —— `github:laoye666-6/dsh-plugin-wallpaper#<commit-sha>`
