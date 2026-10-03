@@ -1,0 +1,4 @@
+* text=auto
+# 预构建产物不做 EOL 转换，保证各平台 checkout 字节一致
+lib/client.js -text
+lib/index.js -text

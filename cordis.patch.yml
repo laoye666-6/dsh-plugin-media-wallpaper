@@ -1,0 +1,5 @@
+# dsh-plugin-wallpaper — 壁纸插件配置层
+# 以组合包（bundle）形式安装时，此层向 Cordis Loader 插入本插件。
+- insert:
+    - id: wallpaper
+      name: dsh-plugin-wallpaper

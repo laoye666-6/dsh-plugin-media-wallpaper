@@ -1,0 +1,348 @@
+/**
+ * 设置面板：同一组件注册到两个官方插槽——
+ *  - settings.section        侧栏 → 设置 → 「壁纸」分区
+ *  - plugins.detail.section  插件管理 → 本插件详情页（subject 过滤）
+ *
+ * 刻意不依赖 locale 服务与标准 hooks（降低 API 差异风险），
+ * 文案按 html.lang 内置 zh-CN / en 两套。
+ */
+
+import { useState, useSyncExternalStore } from 'react'
+import type { ReactNode, ChangeEvent } from 'react'
+import type { SlotComponentProps, ClientContext } from './types'
+import * as state from './state'
+import { ACCEPT_ATTR, detectFormat } from './format'
+import { putMedia, deleteMedia, currentObjectUrl } from './storage'
+
+const STR = {
+  zh: {
+    title: '壁纸',
+    enabled: '启用壁纸背景',
+    pick: '选择图片 / 视频',
+    picked: '当前壁纸',
+    none: '未设置（支持 GIF / APNG / 动图 WebP / PNG / JPEG / MP4 / WebM）',
+    clear: '清除壁纸',
+    reset: '恢复默认',
+    fill: '填充方式',
+    fillCover: '填满（裁剪）',
+    fillContain: '适应（完整显示）',
+    fillFill: '拉伸',
+    fillTile: '平铺',
+    blur: '高斯模糊',
+    brightness: '亮度',
+    dim: '压暗',
+    tint: '界面色调跟随背景',
+    tintStrength: '色调强度',
+    transparency: '组件透明化',
+    tSidebar: '侧栏',
+    tTopbar: '顶栏 / 标题栏',
+    tMain: '主内容区',
+    tRightbar: '右栏',
+    tCards: '卡片与面板',
+    surfaceOpacity: '表面不透明度',
+    videoTileNote: '视频平铺不支持，将按「填满」处理',
+    unsupported: '不支持的文件格式：',
+    loadFailed: '壁纸读取失败（浏览器存储可能已被清理）',
+    needEnable: '选择壁纸后自动启用',
+  },
+  en: {
+    title: 'Wallpaper',
+    enabled: 'Enable wallpaper background',
+    pick: 'Choose image / video',
+    picked: 'Current wallpaper',
+    none: 'Not set (GIF / APNG / animated WebP / PNG / JPEG / MP4 / WebM)',
+    clear: 'Clear wallpaper',
+    reset: 'Reset to defaults',
+    fill: 'Fill mode',
+    fillCover: 'Cover (crop)',
+    fillContain: 'Contain (fit)',
+    fillFill: 'Stretch',
+    fillTile: 'Tile',
+    blur: 'Gaussian blur',
+    brightness: 'Brightness',
+    dim: 'Dim',
+    tint: 'Tint UI with background color',
+    tintStrength: 'Tint strength',
+    transparency: 'Component transparency',
+    tSidebar: 'Sidebar',
+    tTopbar: 'Top bar / title bar',
+    tMain: 'Main content',
+    tRightbar: 'Right bar',
+    tCards: 'Cards & panels',
+    surfaceOpacity: 'Surface opacity',
+    videoTileNote: 'Tiling is unavailable for video; falls back to cover',
+    unsupported: 'Unsupported file format: ',
+    loadFailed: 'Failed to load wallpaper (browser storage may have been cleared)',
+    needEnable: 'Picking a wallpaper enables it automatically',
+  },
+} as const
+
+type Strings = Record<keyof (typeof STR)['zh'], string>
+
+function useStrings(): Strings {
+  const lang = typeof document !== 'undefined' ? document.documentElement.lang : 'en'
+  return lang.toLowerCase().startsWith('zh') ? STR.zh : STR.en
+}
+
+async function onPickFile(e: ChangeEvent<HTMLInputElement>, onError: (msg: string) => void): Promise<void> {
+  const file = e.target.files?.[0]
+  e.target.value = ''
+  if (!file) return
+  try {
+    const head = new Uint8Array(await file.slice(0, 65536).arrayBuffer())
+    const det = detectFormat(head)
+    if (!det) {
+      onError(file.name)
+      return
+    }
+    const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `wp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+    const prev = state.getSnapshot().mediaId
+    await putMedia({ id, blob: file, mime: det.mime, name: file.name, addedAt: Date.now() })
+    if (prev && prev !== id) void deleteMedia(prev)
+    state.set({ mediaId: id, mediaType: det.kind, formatLabel: det.label, mediaName: file.name, enabled: true })
+  } catch (err) {
+    console.warn('[dsh-plugin-wallpaper] pick failed', err)
+  }
+}
+
+function onClear(): void {
+  const prev = state.getSnapshot().mediaId
+  if (prev) void deleteMedia(prev)
+  state.set({ enabled: false, mediaId: null, mediaType: null, formatLabel: null, mediaName: null })
+}
+
+export function WallpaperSection(): ReactNode {
+  const s = useSyncExternalStore(state.subscribe, state.getSnapshot)
+  const t = useStrings()
+  const [error, setError] = useState('')
+  const hasMedia = s.mediaId !== null
+  const thumb = hasMedia ? currentObjectUrl() : null
+
+  return (
+    <section className="wp-section">
+      <div className="wp-card">
+        <div className="wp-row">
+          <div className="wp-row-main">
+            <span className="wp-title">{t.title}</span>
+            {!hasMedia && <span className="wp-hint">{t.needEnable}</span>}
+          </div>
+          <label className="wp-check">
+            <input
+              type="checkbox"
+              checked={s.enabled}
+              onChange={(e) => state.set({ enabled: e.target.checked })}
+            />
+            <span>{t.enabled}</span>
+          </label>
+        </div>
+
+        <div className="wp-row">
+          <div className="wp-row-main">
+            <span>{t.picked}</span>
+            <span className="wp-hint">
+              {s.mediaName ?? t.none}
+              {s.formatLabel ? <span className="wp-badge"> {s.formatLabel}</span> : null}
+            </span>
+          </div>
+          <label className="wp-btn">
+            {t.pick}
+            <input
+              type="file"
+              accept={ACCEPT_ATTR}
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                setError('')
+                void onPickFile(e, setError)
+              }}
+            />
+          </label>
+        </div>
+
+        {thumb ? <div className="wp-thumb" style={{ backgroundImage: `url("${thumb}")` }} /> : null}
+        {error ? <span className="wp-error">{t.unsupported}{error}</span> : null}
+
+        <div className="wp-row">
+          <span>{t.fill}</span>
+          <select
+            className="wp-select"
+            value={s.fit}
+            onChange={(e) => state.set({ fit: e.target.value as state.FillMode })}
+          >
+            <option value="cover">{t.fillCover}</option>
+            <option value="contain">{t.fillContain}</option>
+            <option value="fill">{t.fillFill}</option>
+            <option value="tile">{t.fillTile}{s.mediaType === 'video' ? ' *' : ''}</option>
+          </select>
+        </div>
+        {s.mediaType === 'video' && s.fit === 'tile' ? <span className="wp-hint">{t.videoTileNote}</span> : null}
+
+        <div className="wp-range-row">
+          <span>{t.blur}</span>
+          <input
+            className="wp-range"
+            type="range"
+            min={0}
+            max={40}
+            step={1}
+            value={s.blur}
+            onChange={(e) => state.set({ blur: Number(e.target.value) })}
+          />
+          <span className="wp-value">{s.blur}px</span>
+        </div>
+
+        <div className="wp-range-row">
+          <span>{t.brightness}</span>
+          <input
+            className="wp-range"
+            type="range"
+            min={20}
+            max={200}
+            step={5}
+            value={s.brightness}
+            onChange={(e) => state.set({ brightness: Number(e.target.value) })}
+          />
+          <span className="wp-value">{s.brightness}%</span>
+        </div>
+
+        <div className="wp-range-row">
+          <span>{t.dim}</span>
+          <input
+            className="wp-range"
+            type="range"
+            min={0}
+            max={90}
+            step={5}
+            value={s.dim}
+            onChange={(e) => state.set({ dim: Number(e.target.value) })}
+          />
+          <span className="wp-value">{s.dim}%</span>
+        </div>
+
+        <div className="wp-row">
+          <label className="wp-check">
+            <input
+              type="checkbox"
+              checked={s.tintFollow}
+              onChange={(e) => state.set({ tintFollow: e.target.checked })}
+            />
+            <span>{t.tint}</span>
+          </label>
+        </div>
+        {s.tintFollow ? (
+          <div className="wp-range-row">
+            <span>{t.tintStrength}</span>
+            <input
+              className="wp-range"
+              type="range"
+              min={0}
+              max={50}
+              step={1}
+              value={s.tintStrength}
+              onChange={(e) => state.set({ tintStrength: Number(e.target.value) })}
+            />
+            <span className="wp-value">{s.tintStrength}%</span>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="wp-card">
+        <span className="wp-title">{t.transparency}</span>
+        <div className="wp-grid2">
+          <label className="wp-check">
+            <input
+              type="checkbox"
+              checked={s.transparent.sidebar}
+              onChange={(e) => state.setTransparency({ sidebar: e.target.checked })}
+            />
+            <span>{t.tSidebar}</span>
+          </label>
+          <label className="wp-check">
+            <input
+              type="checkbox"
+              checked={s.transparent.topbar}
+              onChange={(e) => state.setTransparency({ topbar: e.target.checked })}
+            />
+            <span>{t.tTopbar}</span>
+          </label>
+          <label className="wp-check">
+            <input
+              type="checkbox"
+              checked={s.transparent.main}
+              onChange={(e) => state.setTransparency({ main: e.target.checked })}
+            />
+            <span>{t.tMain}</span>
+          </label>
+          <label className="wp-check">
+            <input
+              type="checkbox"
+              checked={s.transparent.rightbar}
+              onChange={(e) => state.setTransparency({ rightbar: e.target.checked })}
+            />
+            <span>{t.tRightbar}</span>
+          </label>
+          <label className="wp-check">
+            <input
+              type="checkbox"
+              checked={s.transparent.cards}
+              onChange={(e) => state.setTransparency({ cards: e.target.checked })}
+            />
+            <span>{t.tCards}</span>
+          </label>
+        </div>
+        <div className="wp-range-row">
+          <span>{t.surfaceOpacity}</span>
+          <input
+            className="wp-range"
+            type="range"
+            min={30}
+            max={100}
+            step={5}
+            value={s.surfaceOpacity}
+            onChange={(e) => state.set({ surfaceOpacity: Number(e.target.value) })}
+          />
+          <span className="wp-value">{s.surfaceOpacity}%</span>
+        </div>
+      </div>
+
+      <div className="wp-row">
+        <button type="button" className="wp-btn wp-btn-danger" onClick={onClear}>
+          {t.clear}
+        </button>
+        <button type="button" className="wp-btn" onClick={() => state.resetAll()}>
+          {t.reset}
+        </button>
+      </div>
+    </section>
+  )
+}
+
+/** 注册双插槽入口；任一失败不影响另一处与壁纸主功能。 */
+export function registerSettingsSlots(ctx: ClientContext): void {
+  const slots = ctx.slots
+  if (!slots?.inject || !slots?.register) {
+    console.warn('[dsh-plugin-wallpaper] ctx.slots unavailable; settings UI skipped')
+    return
+  }
+  try {
+    slots.inject('settings.section', () =>
+      slots.register?.({ name: 'settings.section', id: 'dsh-plugin-wallpaper', order: 860 }, WallpaperSection),
+    )
+  } catch (err) {
+    console.warn('[dsh-plugin-wallpaper] settings.section registration failed', err)
+  }
+  try {
+    slots.inject('plugins.detail.section', () =>
+      slots.register?.(
+        { name: 'plugins.detail.section', id: 'dsh-plugin-wallpaper', order: 60 },
+        (props: SlotComponentProps) =>
+          props?.subject?.kind === 'bundle' && props.subject.pkg === 'dsh-plugin-wallpaper' ? (
+            <WallpaperSection />
+          ) : null,
+      ),
+    )
+  } catch (err) {
+    console.warn('[dsh-plugin-wallpaper] plugins.detail.section registration failed', err)
+  }
+}
