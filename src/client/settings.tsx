@@ -11,6 +11,7 @@ import { useState, useSyncExternalStore } from 'react'
 import type { ReactNode, ChangeEvent } from 'react'
 import type { SlotComponentProps, ClientContext } from './types'
 import { PLUGIN_PKG, PLUGIN_VERSION } from './identity'
+import { PRESETS } from './presets-data.gen'
 import * as state from './state'
 import { ACCEPT_ATTR, detectFormat } from './format'
 import { putMedia, deleteMedia, currentObjectUrl } from './storage'
@@ -20,6 +21,11 @@ const STR = {
     title: '壁纸',
     enabled: '启用壁纸背景',
     pick: '选择图片 / 视频',
+    presets: '预置壁纸',
+    download: '下载',
+    copyLink: '复制链接',
+    copied: '已复制 ✓',
+    presetsHint: '源文件在 GitHub 仓库 presets/ 目录；下载后用上方「选择图片 / 视频」选用',
     picked: '当前壁纸',
     none: '未设置（支持 GIF / APNG / 动图 WebP / PNG / JPEG / MP4 / WebM）',
     clear: '清除壁纸',
@@ -59,6 +65,11 @@ const STR = {
     title: 'Wallpaper',
     enabled: 'Enable wallpaper background',
     pick: 'Choose image / video',
+    presets: 'Preset wallpapers',
+    download: 'Download',
+    copyLink: 'Copy link',
+    copied: 'Copied ✓',
+    presetsHint: 'Sources live in the GitHub repo presets/ folder; after downloading, pick them via Choose image / video above',
     picked: 'Current wallpaper',
     none: 'Not set (GIF / APNG / animated WebP / PNG / JPEG / MP4 / WebM)',
     clear: 'Clear wallpaper',
@@ -154,6 +165,7 @@ export function WallpaperSection(): ReactNode {
   const s = useSyncExternalStore(state.subscribe, state.getSnapshot)
   const t = useStrings()
   const [error, setError] = useState('')
+  const [copied, setCopied] = useState('')
   const hasMedia = s.mediaId !== null
   const thumb = hasMedia ? currentObjectUrl() : null
 
@@ -199,6 +211,44 @@ export function WallpaperSection(): ReactNode {
 
         {thumb ? <div className="wp-thumb" style={{ backgroundImage: `url("${thumb}")` }} /> : null}
         {error ? <span className="wp-error">{t.unsupported}{error}</span> : null}
+
+        {PRESETS.length > 0 ? (
+          <div className="wp-card">
+            <span className="wp-title">{t.presets}</span>
+            <div className="wp-presets">
+              {PRESETS.map((p) => (
+                <div className="wp-preset" key={p.id}>
+                  <img className="wp-preset-thumb" src={p.thumb} alt={p.name} />
+                  <span className="wp-preset-name" title={p.name}>{p.name}</span>
+                  <div className="wp-preset-meta">
+                    <span className="wp-preset-size">{p.kind === 'video' ? '▶ ' : ''}{p.sizeMb}MB</span>
+                    <div className="wp-preset-actions">
+                      <button type="button" className="wp-mini-btn" onClick={() => window.open(p.url, '_blank')}>
+                        {t.download}
+                      </button>
+                      <button
+                        type="button"
+                        className="wp-mini-btn"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(p.url)
+                            setCopied(p.id)
+                            setTimeout(() => setCopied(''), 1500)
+                          } catch {
+                            window.open(p.url, '_blank')
+                          }
+                        }}
+                      >
+                        {copied === p.id ? t.copied : t.copyLink}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="wp-hint">{t.presetsHint}</div>
+          </div>
+        ) : null}
 
         <div className="wp-row">
           <span>{t.fill}</span>

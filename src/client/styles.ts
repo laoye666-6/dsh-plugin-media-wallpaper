@@ -361,6 +361,67 @@ body[data-wp-active][data-wp-fallback='1'] {
   background: transparent;
   cursor: pointer;
 }
+/* 预置壁纸：横向滚动的缩略图卡片 */
+.wp-presets {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.wp-preset {
+  flex: 0 0 148px;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border-radius: var(--dsw-radius-md, 12px);
+  border: 0.5px solid var(--dsw-alias-border-l2, transparent);
+  background: var(--dsw-alias-bg-layer-2, transparent);
+  backdrop-filter: blur(10px) saturate(1.3);
+  -webkit-backdrop-filter: blur(10px) saturate(1.3);
+  min-width: 0;
+}
+.wp-preset-thumb {
+  width: 100%;
+  height: 78px;
+  object-fit: cover;
+  border-radius: var(--dsw-radius-sm, 8px);
+  display: block;
+}
+.wp-preset-name {
+  font-size: 0.88em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wp-preset-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.wp-preset-size {
+  color: var(--dsw-alias-label-tertiary, inherit);
+  font-size: 0.8em;
+  white-space: nowrap;
+}
+.wp-preset-actions {
+  display: flex;
+  gap: 6px;
+}
+.wp-mini-btn {
+  cursor: pointer;
+  flex: 1;
+  padding: 3px 6px;
+  border-radius: var(--dsw-radius-sm, 8px);
+  border: 0.5px solid var(--dsw-alias-border-l2, transparent);
+  background: var(--dsw-alias-bg-layer-3, transparent);
+  color: var(--dsw-alias-label-primary, inherit);
+  font-size: 0.8em;
+  white-space: nowrap;
+}
+.wp-mini-btn:hover {
+  filter: brightness(1.1);
+}
 `
 
 /** 注入全局样式（幂等）。样式标签带 data-plugin 归属标记。 */

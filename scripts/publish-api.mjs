@@ -20,7 +20,7 @@ if (!m) {
   process.exit(1)
 }
 const REPO = m[1]
-const SKIP = new Set(['.git', 'node_modules'])
+const SKIP = new Set(['.git', 'node_modules', 'presets']) // presets/ 大体积媒体走 Release 资产
 const DEFAULT_BRANCH = 'main'
 const VERSION_TAG = `v${pkg.version}`
 
