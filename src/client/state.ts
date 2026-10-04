@@ -55,6 +55,9 @@ export interface WallpaperSettings {
   finish: SurfaceFinish
   /** 玻璃模糊强度 px（4–30，毛玻璃/液态玻璃共用） */
   frostStrength: number
+  /** 自定义字体颜色（覆盖官方 label 令牌） */
+  textColorOn: boolean
+  textColor: string
   /** 逐组件透明开关 */
   transparent: TransparencyToggles
   /** 逐组件表面不透明度（开关开启时生效） */
@@ -75,6 +78,8 @@ export const DEFAULT_SETTINGS: WallpaperSettings = {
   tintStrength: 18,
   finish: 'frosted',
   frostStrength: 14,
+  textColorOn: false,
+  textColor: '#f5f6f7',
   transparent: {
     sidebar: true,
     topbar: true,
@@ -119,6 +124,8 @@ function revive(raw: unknown): WallpaperSettings {
   base.tintStrength = num(raw.tintStrength, base.tintStrength, 0, 50)
   base.finish = raw.finish === 'frosted' || raw.finish === 'liquid' || raw.finish === 'none' ? raw.finish : base.finish
   base.frostStrength = num(raw.frostStrength, base.frostStrength, 4, 30)
+  base.textColorOn = bool(raw.textColorOn, base.textColorOn)
+  base.textColor = typeof raw.textColor === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(raw.textColor) ? raw.textColor : base.textColor
   if (isRecord(raw.transparent)) {
     base.transparent.sidebar = bool(raw.transparent.sidebar, base.transparent.sidebar)
     base.transparent.topbar = bool(raw.transparent.topbar, base.transparent.topbar)

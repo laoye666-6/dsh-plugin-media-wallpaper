@@ -85,13 +85,41 @@ body[data-wp-active] [data-wp-frame] {
 }
 
 /* ===== 表面质感：毛玻璃 / 液态玻璃 =====
-   质感作用于前景 UI（输入框卡、新对话 hero、设置面板与卡片），不作用于整片背景列。
+   质感作用于前景 UI（输入框卡、新对话 hero、设置面板与卡片、设置页侧边导航按钮），
+   不作用于整片背景列。CSS Modules 类名哈希会随壳前端重建失效，但局部名后缀
+   （_navCell/_card/_panel/_hero）长期稳定，用 [class*=] 后缀匹配；
    [data-composer-card] 为壳原生属性（构建可存活）；模糊由 ::before 伪元素承载，
    伪元素没有 DOM 后代，不会成为 fixed 后代的包含块。 */
-   实现参照通用做法：质感主要是「令牌源头」的玻璃配方（见下方 layer-1/2/3 等），
-   类名哈希会随壳前端重建失效，故元素选择器只用于少数稳定锚点：
-   [data-composer-card] 为壳原生属性（构建可存活）；模糊由 ::before 伪元素承载，
-   伪元素没有 DOM 后代，不会成为 fixed 后代的包含块。 */
+body[data-wp-active][data-wp-finish='frosted'] [data-composer-card],
+body[data-wp-active][data-wp-finish='frosted'] [class*="_navCell"],
+body[data-wp-active][data-wp-finish='frosted'] [class*="_card"],
+body[data-wp-active][data-wp-finish='frosted'] [class*="_panel"],
+body[data-wp-active][data-wp-finish='frosted'] [class*="_hero"],
+body[data-wp-active][data-wp-finish='frosted'] [class*="_composerHero"] {
+  backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.4);
+}
+/* 液态玻璃：折射感（更高饱和/亮度）+ 白色高光渐变与内描边 */
+body[data-wp-active][data-wp-finish='liquid'] [data-composer-card]::before {
+  backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.7) brightness(1.05);
+  -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.7) brightness(1.05);
+}
+body[data-wp-active][data-wp-finish='liquid'] [data-composer-card],
+body[data-wp-active][data-wp-finish='liquid'] [class*="_navCell"],
+body[data-wp-active][data-wp-finish='liquid'] [class*="_card"],
+body[data-wp-active][data-wp-finish='liquid'] [class*="_panel"],
+body[data-wp-active][data-wp-finish='liquid'] [class*="_hero"],
+body[data-wp-active][data-wp-finish='liquid'] [class*="_composerHero"] {
+  background-image: linear-gradient(
+      135deg,
+      rgb(255 255 255 / 0.14),
+      rgb(255 255 255 / 0.03) 45%,
+      rgb(255 255 255 / 0.1)
+    ) !important;
+  box-shadow:
+    inset 0 0 0 0.5px rgb(255 255 255 / 0.2),
+    inset 0 1px 0 rgb(255 255 255 / 0.12) !important;
+}
 body[data-wp-active][data-wp-finish='frosted'] [data-composer-card],
 body[data-wp-active][data-wp-finish='liquid'] [data-composer-card] {
   position: relative;
@@ -105,21 +133,12 @@ body[data-wp-active][data-wp-finish='frosted'] [data-composer-card]::before {
   backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.3);
   -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.3);
 }
-/* 液态玻璃：输入框卡叠加折射感（更高饱和/亮度）与白色高光渐变、内描边 */
-body[data-wp-active][data-wp-finish='liquid'] [data-composer-card]::before {
-  backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.7) brightness(1.05);
-  -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.7) brightness(1.05);
-}
-body[data-wp-active][data-wp-finish='liquid'] [data-composer-card] {
-  background-image: linear-gradient(
-      135deg,
-      rgb(255 255 255 / 0.14),
-      rgb(255 255 255 / 0.03) 45%,
-      rgb(255 255 255 / 0.1)
-    ) !important;
-  box-shadow:
-    inset 0 0 0 0.5px rgb(255 255 255 / 0.2),
-    inset 0 1px 0 rgb(255 255 255 / 0.12) !important;
+
+/* ===== 自定义字体颜色（覆盖官方 label 令牌，压过主题与 presenter 内联写入） ===== */
+body[data-wp-active][data-wp-text='1'] {
+  --dsw-alias-label-primary: var(--wp-text-color, #ffffff) !important;
+  --dsw-alias-label-secondary: color-mix(in srgb, var(--wp-text-color, #ffffff) 78%, transparent) !important;
+  --dsw-alias-label-tertiary: color-mix(in srgb, var(--wp-text-color, #ffffff) 58%, transparent) !important;
 }
 
 /* ===== 逐组件开关与独立不透明度 =====
@@ -284,11 +303,13 @@ body[data-wp-active][data-wp-fallback='1'] {
 .wp-btn {
   cursor: pointer;
   padding: 5px 12px;
-  border-radius: var(--dsw-radius-sm, 8px);
+  border-radius: var(--dsw-radius-md, 12px);
   border: 0.5px solid var(--dsw-alias-border-l2, transparent);
   background: var(--dsw-alias-bg-layer-2, transparent);
   color: var(--dsw-alias-label-primary, inherit);
   font-size: 0.92em;
+  backdrop-filter: blur(10px) saturate(1.3);
+  -webkit-backdrop-filter: blur(10px) saturate(1.3);
 }
 .wp-btn:hover {
   filter: brightness(1.06);
@@ -309,11 +330,46 @@ body[data-wp-active][data-wp-fallback='1'] {
 }
 .wp-select {
   max-width: 180px;
-  padding: 4px 8px;
-  border-radius: var(--dsw-radius-xs, 6px);
+  padding: 5px 10px;
+  border-radius: var(--dsw-radius-md, 12px);
   border: 0.5px solid var(--dsw-alias-border-l2, transparent);
   background: var(--dsw-alias-bg-layer-2, transparent);
   color: var(--dsw-alias-label-primary, inherit);
+  backdrop-filter: blur(10px) saturate(1.3);
+  -webkit-backdrop-filter: blur(10px) saturate(1.3);
+}
+/* 质感分段选择器：圆角玻璃按钮，与整体 UI 同步 */
+.wp-seg {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+.wp-seg-btn {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: var(--dsw-radius-md, 12px);
+  border: 0.5px solid var(--dsw-alias-border-l2, transparent);
+  background: var(--dsw-alias-bg-layer-2, transparent);
+  color: var(--dsw-alias-label-secondary, inherit);
+  cursor: pointer;
+  font-size: 0.92em;
+  white-space: nowrap;
+  backdrop-filter: blur(10px) saturate(1.3);
+  -webkit-backdrop-filter: blur(10px) saturate(1.3);
+}
+.wp-seg-btn[data-active='1'] {
+  background: var(--dsw-alias-bg-layer-3, var(--dsw-alias-bg-layer-2, transparent));
+  border-color: var(--dsw-static-blue-500, #4176e6);
+  color: var(--dsw-alias-label-primary, inherit);
+}
+.wp-color {
+  width: 40px;
+  height: 26px;
+  padding: 0;
+  border: 0.5px solid var(--dsw-alias-border-l2, transparent);
+  border-radius: var(--dsw-radius-sm, 8px);
+  background: transparent;
+  cursor: pointer;
 }
 `
 
