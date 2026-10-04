@@ -97,7 +97,7 @@ body[data-wp-active][data-wp-finish='frosted'] [class*="_composerHero"] {
   backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.4);
   -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.4);
 }
-/* 液态玻璃：折射感（更高饱和/亮度）+ 白色高光渐变与内描边 */
+/* 液态玻璃：折射感（更高饱和/亮度）+ 白色高光渐变 */
 body[data-wp-active][data-wp-finish='liquid'] [data-composer-card]::before {
   backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.7) brightness(1.05);
   -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.7) brightness(1.05);
@@ -112,9 +112,12 @@ body[data-wp-active][data-wp-finish='liquid'] [class*="_composerHero"] {
       rgb(255 255 255 / 0.03) 45%,
       rgb(255 255 255 / 0.1)
     ) !important;
-  box-shadow:
-    inset 0 0 0 0.5px rgb(255 255 255 / 0.2),
-    inset 0 1px 0 rgb(255 255 255 / 0.12) !important;
+}
+/* 玻璃态下隐藏输入框卡自身的描边/内阴影——亮色壁纸上会露出边框 */
+body[data-wp-active][data-wp-finish='frosted'] [data-composer-card],
+body[data-wp-active][data-wp-finish='liquid'] [data-composer-card] {
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
 body[data-wp-active][data-wp-finish='frosted'] [data-composer-card],
 body[data-wp-active][data-wp-finish='liquid'] [data-composer-card] {
