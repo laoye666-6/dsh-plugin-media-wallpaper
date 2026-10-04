@@ -6,3 +6,5 @@ node_modules/
 # DSH 的 git 安装（dsh plugin add github:...）拉取源码且不执行构建脚本，
 # 预构建产物随仓库分发才能做到一条指令安装。
 # 更新代码后须 `npm run build` 并把 lib/ 一并提交。
+presets/build/
+presets/*.zip

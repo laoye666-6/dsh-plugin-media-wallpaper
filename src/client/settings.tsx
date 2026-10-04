@@ -25,7 +25,7 @@ const STR = {
     download: '下载',
     copyLink: '复制链接',
     copied: '已复制 ✓',
-    presetsHint: '源文件在 GitHub 仓库 presets/ 目录；下载后用上方「选择图片 / 视频」选用',
+    presetsHint: '每卷提供 GitHub 直连 / 国内 jsDelivr 两种下载；分卷壁纸下载全部分卷后合并解压',
     picked: '当前壁纸',
     none: '未设置（支持 GIF / APNG / 动图 WebP / PNG / JPEG / MP4 / WebM）',
     clear: '清除壁纸',
@@ -69,7 +69,7 @@ const STR = {
     download: 'Download',
     copyLink: 'Copy link',
     copied: 'Copied ✓',
-    presetsHint: 'Sources live in the GitHub repo presets/ folder; after downloading, pick them via Choose image / video above',
+    presetsHint: 'Each part offers GitHub direct and jsDelivr (CN) downloads; multi-part archives must be merged before extracting',
     picked: 'Current wallpaper',
     none: 'Not set (GIF / APNG / animated WebP / PNG / JPEG / MP4 / WebM)',
     clear: 'Clear wallpaper',
@@ -165,7 +165,6 @@ export function WallpaperSection(): ReactNode {
   const s = useSyncExternalStore(state.subscribe, state.getSnapshot)
   const t = useStrings()
   const [error, setError] = useState('')
-  const [copied, setCopied] = useState('')
   const hasMedia = s.mediaId !== null
   const thumb = hasMedia ? currentObjectUrl() : null
 
@@ -220,29 +219,21 @@ export function WallpaperSection(): ReactNode {
                 <div className="wp-preset" key={p.id}>
                   <img className="wp-preset-thumb" src={p.thumb} alt={p.name} />
                   <span className="wp-preset-name" title={p.name}>{p.name}</span>
-                  <div className="wp-preset-meta">
-                    <span className="wp-preset-size">{p.kind === 'video' ? '▶ ' : ''}{p.sizeMb}MB</span>
-                    <div className="wp-preset-actions">
-                      <button type="button" className="wp-mini-btn" onClick={() => window.open(p.url, '_blank')}>
-                        {t.download}
-                      </button>
-                      <button
-                        type="button"
-                        className="wp-mini-btn"
-                        onClick={async () => {
-                          try {
-                            await navigator.clipboard.writeText(p.url)
-                            setCopied(p.id)
-                            setTimeout(() => setCopied(''), 1500)
-                          } catch {
-                            window.open(p.url, '_blank')
-                          }
-                        }}
-                      >
-                        {copied === p.id ? t.copied : t.copyLink}
-                      </button>
-                    </div>
+                  <span className="wp-preset-size">{p.kind === 'video' ? '▶ ' : ''}{p.sizeLabel}</span>
+                  <div className="wp-preset-actions">
+                    {p.downloads.map((d) => (
+                      <div className="wp-preset-dl" key={d.label}>
+                        <span className="wp-preset-dl-label">{d.label}</span>
+                        <button type="button" className="wp-mini-btn" onClick={() => window.open(d.github, '_blank')}>
+                          GitHub
+                        </button>
+                        <button type="button" className="wp-mini-btn" onClick={() => window.open(d.cdn, '_blank')}>
+                          国内
+                        </button>
+                      </div>
+                    ))}
                   </div>
+                  {p.hint ? <div className="wp-hint">{p.hint}</div> : null}
                 </div>
               ))}
             </div>

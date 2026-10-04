@@ -20,7 +20,7 @@ if (!m) {
   process.exit(1)
 }
 const REPO = m[1]
-const SKIP = new Set(['.git', 'node_modules'])
+const SKIP = new Set(['.git', 'node_modules', 'build'])
 const DEFAULT_BRANCH = 'main'
 const VERSION_TAG = `v${pkg.version}`
 
@@ -33,6 +33,28 @@ function gh(path, body, method = 'POST') {
     encoding: 'utf8',
   })
   return out.trim() ? JSON.parse(out) : null
+}
+
+// 大文件 blob 走 Node fetch 直连 API（gh api --input 对 ~20MB+ 载荷有自身上限）
+function ghToken() {
+  return execFileSync('gh', ['auth', 'token'], { encoding: 'utf8' }).trim()
+}
+let token = null
+async function uploadBlob(path, filePath) {
+  token ??= ghToken()
+  const content = readFileSync(filePath).toString('base64')
+  const res = await fetch(`https://api.github.com/repos/${REPO}/git/blobs`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ content, encoding: 'base64' }),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(`blob ${path}: ${json.message}`)
+  return json
 }
 
 function walk(dir) {
@@ -62,7 +84,7 @@ try {
 const tree = []
 for (const full of walk(ROOT)) {
   const rel = relative(ROOT, full).split(sep).join('/')
-  const blob = gh(`/repos/${REPO}/git/blobs`, { content: readFileSync(full).toString('base64'), encoding: 'base64' })
+  const blob = await uploadBlob(rel, full)
   tree.push({ path: rel, mode: '100644', type: 'blob', sha: blob.sha })
   console.log(`blob ${rel} -> ${blob.sha.slice(0, 8)}`)
 }

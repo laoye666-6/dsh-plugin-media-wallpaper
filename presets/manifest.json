@@ -1,5 +1,27 @@
 [
-  { "id": "miku-city", "file": "miku-city.jpg", "name": "初音ミク · 都市夜景", "kind": "image", "mime": "image/jpeg" },
-  { "id": "mizu-mirror", "file": "mizu-mirror.mp4", "name": "水镜初音 · 视频", "kind": "video", "mime": "video/mp4" },
-  { "id": "hatsune", "file": "hatsune.mp4", "name": "初音 · 视频", "kind": "video", "mime": "video/mp4" }
+  {
+    "id": "miku-city",
+    "file": "miku-city.jpg",
+    "name": "初音ミク · 都市夜景",
+    "kind": "image",
+    "mime": "image/jpeg"
+  },
+  {
+    "id": "mizu-mirror",
+    "file": "mizu-mirror.mp4",
+    "name": "水镜初音 · 视频",
+    "kind": "video",
+    "mime": "video/mp4",
+    "archive": "mizu-1080p.zip",
+    "quality": "1080P"
+  },
+  {
+    "id": "hatsune",
+    "file": "hatsune-2k.mp4",
+    "name": "初音 · 视频",
+    "kind": "video",
+    "mime": "video/mp4",
+    "archive": "hatsune-2k.zip",
+    "quality": "2K"
+  }
 ]
