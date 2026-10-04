@@ -192,8 +192,9 @@ export function applySettings(s: WallpaperSettings): void {
     body.removeAttribute('data-wp-active')
     body.removeAttribute('data-wp-finish')
     body.removeAttribute('data-wp-text')
+    body.removeAttribute('data-wp-accent')
     body.style.removeProperty('--wp-frost')
-    body.style.removeProperty('--wp-text-color')
+    body.style.removeProperty('--wp-text-color-current')
     for (const k of ['sidebar', 'topbar', 'main', 'right', 'cards']) body.style.removeProperty(`--wp-op-${k}`)
     return
   }
@@ -206,9 +207,11 @@ export function applySettings(s: WallpaperSettings): void {
   body.setAttribute('data-wp-t-cards', t.cards ? '1' : '0')
   body.setAttribute('data-wp-tint', s.tintFollow ? '1' : '0')
   body.setAttribute('data-wp-finish', s.finish)
-  body.setAttribute('data-wp-text', s.textColorOn ? '1' : '0')
+  body.setAttribute('data-wp-text', s.textColorMode)
+  body.setAttribute('data-wp-accent', s.accentAuto ? '1' : '0')
   body.style.setProperty('--wp-frost', `${Math.round(s.frostStrength)}px`)
-  body.style.setProperty('--wp-text-color', s.textColor)
+  if (s.textColorMode === 'custom') body.style.setProperty('--wp-text-color-current', s.textColor)
+  else body.style.removeProperty('--wp-text-color-current')
   // 逐组件表面不透明度
   body.style.setProperty('--wp-op-sidebar', String(Math.round(s.opacity.sidebar)))
   body.style.setProperty('--wp-op-topbar', String(Math.round(s.opacity.topbar)))

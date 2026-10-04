@@ -56,8 +56,12 @@ export interface WallpaperSettings {
   /** 玻璃模糊强度 px（4–30，毛玻璃/液态玻璃共用） */
   frostStrength: number
   /** 自定义字体颜色（覆盖官方 label 令牌） */
-  textColorOn: boolean
+  /** 字体颜色模式：关 / 自动跟随背景亮度 / 自定义颜色 */
+  textColorMode: 'off' | 'auto' | 'custom'
+  /** 自定义模式下的字体颜色 */
   textColor: string
+  /** 主色调跟随背景（把壁纸主色混入官方强调色） */
+  accentAuto: boolean
   /** 逐组件透明开关 */
   transparent: TransparencyToggles
   /** 逐组件表面不透明度（开关开启时生效） */
@@ -78,8 +82,9 @@ export const DEFAULT_SETTINGS: WallpaperSettings = {
   tintStrength: 18,
   finish: 'frosted',
   frostStrength: 14,
-  textColorOn: false,
+  textColorMode: 'off',
   textColor: '#f5f6f7',
+  accentAuto: false,
   transparent: {
     sidebar: true,
     topbar: true,
@@ -124,8 +129,14 @@ function revive(raw: unknown): WallpaperSettings {
   base.tintStrength = num(raw.tintStrength, base.tintStrength, 0, 50)
   base.finish = raw.finish === 'frosted' || raw.finish === 'liquid' || raw.finish === 'none' ? raw.finish : base.finish
   base.frostStrength = num(raw.frostStrength, base.frostStrength, 4, 30)
-  base.textColorOn = bool(raw.textColorOn, base.textColorOn)
+  base.textColorMode =
+    raw.textColorMode === 'off' || raw.textColorMode === 'auto' || raw.textColorMode === 'custom'
+      ? raw.textColorMode
+      : bool(raw.textColorOn, false)
+        ? 'auto'
+        : 'off'
   base.textColor = typeof raw.textColor === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(raw.textColor) ? raw.textColor : base.textColor
+  base.accentAuto = bool(raw.accentAuto, base.accentAuto)
   if (isRecord(raw.transparent)) {
     base.transparent.sidebar = bool(raw.transparent.sidebar, base.transparent.sidebar)
     base.transparent.topbar = bool(raw.transparent.topbar, base.transparent.topbar)

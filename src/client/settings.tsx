@@ -51,7 +51,12 @@ const STR = {
     finishFrosted: '毛玻璃',
     finishLiquid: '液态玻璃',
     frostStrength: '玻璃强度',
-    textColor: '自定义字体颜色',
+    textColor: '字体颜色',
+    textModeOff: '关',
+    textModeAuto: '自动',
+    textModeCustom: '自定义',
+    textColorPick: '选择颜色',
+    accentAuto: '主色调跟随背景',
     finishHint: '作用于输入框、新对话与设置面板等前景 UI；背景模糊请用高斯模糊滑杆',
     opacityHint: '开关控制该区域是否透出壁纸，滑杆单独调节各自的不透明度',
     opaque: '不透明',
@@ -99,7 +104,12 @@ const STR = {
     finishFrosted: 'Frosted glass',
     finishLiquid: 'Liquid glass',
     frostStrength: 'Glass strength',
-    textColor: 'Custom text color',
+    textColor: 'Text color',
+    textModeOff: 'Off',
+    textModeAuto: 'Auto',
+    textModeCustom: 'Custom',
+    textColorPick: 'Pick color',
+    accentAuto: 'Accent follows background',
     finishHint: 'Applies to composer, hero and settings panels; use Gaussian blur for the background',
     opacityHint: 'Toggle whether a region shows the wallpaper; each slider adjusts its own opacity',
     opaque: 'Opaque',
@@ -434,20 +444,47 @@ export function WallpaperSection(): ReactNode {
         ) : null}
 
         <div className="wp-row">
+          <span>{t.textColor}</span>
+          <div className="wp-seg" role="radiogroup" aria-label={t.textColor}>
+            {(
+              [
+                ['off', t.textModeOff],
+                ['auto', t.textModeAuto],
+                ['custom', t.textModeCustom],
+              ] as const
+            ).map(([m, label]) => (
+              <button
+                key={m}
+                type="button"
+                className="wp-seg-btn"
+                data-active={s.textColorMode === m ? '1' : '0'}
+                onClick={() => state.set({ textColorMode: m })}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {s.textColorMode === 'custom' ? (
+          <div className="wp-row">
+            <span>{t.textColorPick}</span>
+            <input
+              type="color"
+              className="wp-color"
+              value={s.textColor}
+              onChange={(e) => state.set({ textColor: e.target.value })}
+            />
+          </div>
+        ) : null}
+        <div className="wp-row">
           <label className="wp-check">
             <input
               type="checkbox"
-              checked={s.textColorOn}
-              onChange={(e) => state.set({ textColorOn: e.target.checked })}
+              checked={s.accentAuto}
+              onChange={(e) => state.set({ accentAuto: e.target.checked })}
             />
-            <span>{t.textColor}</span>
+            <span>{t.accentAuto}</span>
           </label>
-          <input
-            type="color"
-            className="wp-color"
-            value={s.textColor}
-            onChange={(e) => state.set({ textColor: e.target.value })}
-          />
         </div>
       </div>
 

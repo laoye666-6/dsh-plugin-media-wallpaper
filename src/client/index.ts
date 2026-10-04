@@ -28,6 +28,57 @@ export const inject = ['slots']
 
 let unsubscribe: (() => void) | null = null
 let loadedMediaId: string | null = null
+/** 最近一次壁纸主色取样（rgb(r g b) 字符串），供自动字色计算。 */
+let lastTint: string | null = null
+
+/** 强调色静态令牌：主色调跟随需要在覆盖它们之前留下原值，否则 color-mix 会形成循环引用。 */
+const ACCENT_KEYS = ['--dsw-static-blue-400', '--dsw-static-blue-500', '--dsw-static-blue-600', '--dsw-static-deepseek-450'] as const
+
+function captureAccents(): void {
+  if (typeof document === 'undefined') return
+  const body = document.body
+  if (!body || body.dataset.wpAccentCaptured === '1') return
+  for (const key of ACCENT_KEYS) {
+    const value = getComputedStyle(body).getPropertyValue(key).trim()
+    if (value) body.style.setProperty(`${key.replace('--dsw-static-', '--wp-accent-base-')}`, value)
+  }
+  body.dataset.wpAccentCaptured = '1'
+}
+
+let lastAutoTextDark = false
+
+/** 由"壁纸主色 + 玻璃叠层"的有效表面亮度选择字体颜色：亮表面配深字，暗表面配浅字。
+    带滞回（进入深字/浅字阈值不同），避免视频壁纸播放时文字颜色来回抖动。 */
+function updateAutoText(): void {
+  const body = typeof document !== 'undefined' ? document.body : null
+  if (!body) return
+  const s = state.getSnapshot()
+  if (s.textColorMode !== 'auto' || lastTint === null) {
+    body.style.removeProperty('--wp-text-color-auto')
+    return
+  }
+  const m = /rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(lastTint)
+  if (!m) return
+  const wall: [number, number, number] = [Number(m[1]), Number(m[2]), Number(m[3])]
+  const mix = (a: [number, number, number], b: [number, number, number], t: number): [number, number, number] => [
+    Math.round(a[0] + (b[0] - a[0]) * t),
+    Math.round(a[1] + (b[1] - a[1]) * t),
+    Math.round(a[2] + (b[2] - a[2]) * t),
+  ]
+  // 玻璃色：色调跟随开启时带壁纸色相，否则近白（与 styles.ts 的 --wp-glass-tint 一致）
+  const glassTint: [number, number, number] = s.tintFollow ? mix(wall, [255, 255, 255], s.tintStrength / 100) : [255, 255, 255]
+  // 面板玻璃复合不透明度（实测：cards 不透明度 × 1.2 ≈ 玻璃釉面 alpha，上限 0.92）
+  const glassAlpha = Math.min(0.92, (s.opacity.cards / 100) * 1.2)
+  const effective = mix(wall, glassTint, glassAlpha)
+  const lin = (c: number): number => {
+    const v = c / 255
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+  }
+  const luminance = 0.2126 * lin(effective[0]) + 0.7152 * lin(effective[1]) + 0.0722 * lin(effective[2])
+  if (luminance > 0.3) lastAutoTextDark = true
+  else if (luminance < 0.22) lastAutoTextDark = false
+  body.style.setProperty('--wp-text-color-current', lastAutoTextDark ? '#1b1c22' : '#f5f6f7')
+}
 
 async function loadMedia(id: string): Promise<void> {
   try {
@@ -59,6 +110,7 @@ function clearMedia(): void {
 
 function applyAll(s: state.WallpaperSettings): void {
   surface.applySettings(s)
+  updateAutoText()
   if (s.mediaId !== loadedMediaId) {
     loadedMediaId = s.mediaId
     if (s.mediaId !== null) void loadMedia(s.mediaId)
@@ -72,6 +124,7 @@ export function apply(ctx: ClientContext): void {
     injectStyles()
     layer.ensureLayer()
     surface.start()
+    captureAccents()
 
     unsubscribe = state.subscribe(() => applyAll(state.getSnapshot()))
 
@@ -80,8 +133,10 @@ export function apply(ctx: ClientContext): void {
     palette.onTint((color) => {
       const body = typeof document !== 'undefined' ? document.body : null
       if (!body) return
+      lastTint = color
       if (color === null) body.style.removeProperty('--wp-tint')
       else body.style.setProperty('--wp-tint', color)
+      updateAutoText()
     })
 
     // Cordis 效果钩子：返回的清理函数在插件卸载时自动执行
@@ -90,6 +145,7 @@ export function apply(ctx: ClientContext): void {
         unsubscribe?.()
         unsubscribe = null
         loadedMediaId = null
+        lastTint = null
         palette.watch(null, null)
         surface.stop()
         layer.disposeLayer()

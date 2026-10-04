@@ -111,12 +111,12 @@ body[data-wp-active][data-wp-finish='liquid'] [class*="_composerHero"] {
       rgb(255 255 255 / 0.1)
     ) !important;
 }
-/* 玻璃态下隐藏输入框卡自身的描边/内阴影，并清空内部所有边框——
-   亮色壁纸上任何残留线都会被读成“露出来的边框” */
+/* 玻璃态下输入框卡自身填充透明（只留磨砂/高光）——消除亮色填充形成的"异常边界" */
 body[data-wp-active][data-wp-finish='frosted'] [data-composer-card],
 body[data-wp-active][data-wp-finish='liquid'] [data-composer-card] {
   border-color: transparent !important;
   box-shadow: none !important;
+  background: transparent !important;
 }
 body[data-wp-active][data-wp-finish='frosted'] [data-composer-card] *,
 body[data-wp-active][data-wp-finish='liquid'] [data-composer-card] * {
@@ -124,11 +124,40 @@ body[data-wp-active][data-wp-finish='liquid'] [data-composer-card] * {
   outline: none !important;
 }
 
-/* ===== 自定义字体颜色（覆盖官方 label 令牌，压过主题与 presenter 内联写入） ===== */
-body[data-wp-active][data-wp-text='1'] {
-  --dsw-alias-label-primary: var(--wp-text-color, #ffffff) !important;
-  --dsw-alias-label-secondary: color-mix(in srgb, var(--wp-text-color, #ffffff) 78%, transparent) !important;
-  --dsw-alias-label-tertiary: color-mix(in srgb, var(--wp-text-color, #ffffff) 58%, transparent) !important;
+/* ===== 设置模态面板整体玻璃化 =====
+   面板壳本身透明（诊断实测 bg=rgba(0,0,0,0)），只有内部卡片亮——
+   面板顶栏区域会透出暗壁纸，与卡片明暗不一致。用 :has(_navList) 精确锁定
+   设置模态根面板（插件页卡片不含导航列表，不受影响），铺一层玻璃底。 */
+body[data-wp-active][data-wp-t-cards='1'][data-wp-finish='frosted'] [class*="_panel"]:has([class*="_navList"]),
+body[data-wp-active][data-wp-t-cards='1'][data-wp-finish='liquid'] [class*="_panel"]:has([class*="_navList"]) {
+  backdrop-filter: blur(calc(var(--wp-frost, 14px) + 6px)) saturate(1.25);
+  -webkit-backdrop-filter: blur(calc(var(--wp-frost, 14px) + 6px)) saturate(1.25);
+  background-color: color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 85%), transparent) !important;
+}
+body[data-wp-active][data-wp-t-cards='1']:not([data-wp-finish='none']) [class*="_panel"]:has([class*="_navList"]) {
+  background-color: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 85%), transparent) calc((1 - var(--wp-floor-eff)) * 100%)) !important;
+}
+
+/* ===== 字体颜色（覆盖官方 label 令牌，压过主题与 presenter 内联写入） =====
+   auto：--wp-text-color-current 由取色亮度自动计算（亮壁纸配深字/暗壁纸配浅字）；
+   custom：使用用户选的颜色。 */
+body[data-wp-active][data-wp-text='auto'],
+body[data-wp-active][data-wp-text='custom'] {
+  --dsw-alias-label-primary: var(--wp-text-color-current, #f5f6f7) !important;
+  --dsw-alias-label-secondary: color-mix(in srgb, var(--wp-text-color-current, #f5f6f7) 78%, transparent) !important;
+  --dsw-alias-label-tertiary: color-mix(in srgb, var(--wp-text-color-current, #f5f6f7) 58%, transparent) !important;
+}
+
+/* ===== 主色调跟随背景：把壁纸主色混入官方强调色静态令牌 =====
+   静态令牌是别名层的引用源，覆盖它即全局生效（按钮/滑杆/链接/选中态）。
+   基值来自 --wp-accent-base-*（初始化时捕获的原令牌值，见 index.ts），
+   避免引用被覆盖的令牌自身造成循环。--wp-tint 缺省 transparent 时短暂
+   退化为原色 58% 不透明，取色完成后恢复。 */
+body[data-wp-active][data-wp-accent='1'] {
+  --dsw-static-blue-400: color-mix(in srgb, var(--wp-tint) 42%, var(--wp-accent-base-blue-400, #7aa5e8)) !important;
+  --dsw-static-blue-500: color-mix(in srgb, var(--wp-tint) 42%, var(--wp-accent-base-blue-500, #4176e6)) !important;
+  --dsw-static-blue-600: color-mix(in srgb, var(--wp-tint) 42%, var(--wp-accent-base-blue-600, #3b63d6)) !important;
+  --dsw-static-deepseek-450: color-mix(in srgb, var(--wp-tint) 42%, var(--wp-accent-base-deepseek-450, #6f9fe8)) !important;
 }
 
 /* ===== 逐组件开关与独立不透明度 =====

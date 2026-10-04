@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-media-wallpaper",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "DeepSeek Harness 壁纸插件：图片/视频背景（GIF/APNG/动图 WebP/PNG/JPEG/MP4/WebM），格式自动识别，压暗/亮度/高斯模糊，界面色调跟随，填充方式可调，侧栏/顶栏等组件透明度可控。纯客户端实现。",
   "type": "module",
   "license": "MIT",
