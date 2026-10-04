@@ -43,7 +43,7 @@ function generatePresets() {
       }
       const thumb = `data:image/jpeg;base64,${readFileSync(thumbPath).toString('base64')}`
       const sizeMb = (statSync(filePath).size / 1024 / 1024).toFixed(1)
-      return { ...p, sizeMb, thumb, url: `https://github.com/laoye666-6/dsh-plugin-media-wallpaper/releases/download/${PRESETS_RELEASE_TAG}/${encodeURIComponent(p.file)}` }
+      return { ...p, sizeMb, thumb, url: `https://cdn.jsdelivr.net/gh/laoye666-6/dsh-plugin-media-wallpaper@${PRESETS_RELEASE_TAG}/${encodeURIComponent(p.file)}` }
     })
     .filter(Boolean)
   const ts = `/**
