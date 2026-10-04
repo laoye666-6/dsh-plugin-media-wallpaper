@@ -87,7 +87,7 @@ body[data-wp-active] [data-wp-frame] {
 /* ===== 表面质感：毛玻璃 / 液态玻璃 =====
    质感作用于前景 UI（输入框卡、新对话 hero、设置面板与卡片、设置页侧边导航按钮），
    不作用于整片背景列。CSS Modules 类名哈希会随壳前端重建失效，但局部名后缀
-   （_navCell/_hero/_composerHero）长期稳定，用 [class*=] 后缀匹配；卡片与面板的玻璃感由玻璃配方令牌提供，不逐元素加质感。
+   （_navCell）长期稳定，用 [class*=] 后缀匹配；卡片/面板/大容器的玻璃感由玻璃配方令牌提供，不逐元素加质感。
    [data-composer-card] 为壳原生属性（构建可存活）；模糊由 ::before 伪元素承载，
    伪元素没有 DOM 后代，不会成为 fixed 后代的包含块。 */
 body[data-wp-active][data-wp-finish='frosted'] [data-composer-card],
@@ -100,10 +100,10 @@ body[data-wp-active][data-wp-finish='liquid'] [data-composer-card]::before {
   backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.7) brightness(1.05);
   -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.7) brightness(1.05);
 }
-body[data-wp-active][data-wp-finish='liquid'] [data-composer-card],
-body[data-wp-active][data-wp-finish='liquid'] [class*="_navCell"],
-body[data-wp-active][data-wp-finish='liquid'] [class*="_hero"],
-body[data-wp-active][data-wp-finish='liquid'] [class*="_composerHero"] {
+/* 液态玻璃高光渐变只上小表面（导航按钮）——大容器（hero 等）铺渐变会形成
+   带可见硬边的巨型矩形（用户报告的"异常边框"）。输入框卡的渐变被下方
+   background: transparent 覆盖，仅保留磨砂 ::before。 */
+body[data-wp-active][data-wp-finish='liquid'] [class*="_navCell"] {
   background-image: linear-gradient(
       135deg,
       rgb(255 255 255 / 0.14),
@@ -163,7 +163,14 @@ body[data-wp-active][data-wp-accent='1'] {
 /* ===== 逐组件开关与独立不透明度 =====
    开关开启：该区域按各自不透明度绘制（主内容/右栏为打标元素级重定义，依赖结构识别，
    失败时保持全局透明——宁可可见壁纸）；开关关闭：恢复官方不透明底色。
-   token 重定义带 !important：元素级 !important 在级联上仍胜过 body 级 !important。 */
+   token 重定义带 !important：元素级 !important 在级联上仍胜过 body 级 !important。
+   --wp-center-bg 供 surface.ts 写入 centerCol 内联 !important（压过壳的材质白釉）。 */
+body[data-wp-active][data-wp-t-main='1'] {
+  --wp-center-bg: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-op-main) * 1%), transparent);
+}
+body[data-wp-active]:not([data-wp-t-main='1']) {
+  --wp-center-bg: var(--wp-base-solid);
+}
 body[data-wp-active]:not([data-wp-t-sidebar='1']) [data-wp-sidebar] {
   --dsw-specific-sidebar-fill: var(--wp-sidebar-solid) !important;
   background: var(--wp-sidebar-solid) !important;

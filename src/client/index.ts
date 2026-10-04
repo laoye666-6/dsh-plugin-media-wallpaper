@@ -36,13 +36,18 @@ const ACCENT_KEYS = ['--dsw-static-blue-400', '--dsw-static-blue-500', '--dsw-st
 
 function captureAccents(): void {
   if (typeof document === 'undefined') return
-  const body = document.body
-  if (!body || body.dataset.wpAccentCaptured === '1') return
-  for (const key of ACCENT_KEYS) {
-    const value = getComputedStyle(body).getPropertyValue(key).trim()
-    if (value) body.style.setProperty(`${key.replace('--dsw-static-', '--wp-accent-base-')}`, value)
+  try {
+    const body = document.body
+    if (!body || typeof body.dataset === 'undefined' || typeof getComputedStyle !== 'function') return
+    if (body.dataset.wpAccentCaptured === '1') return
+    for (const key of ACCENT_KEYS) {
+      const value = getComputedStyle(body).getPropertyValue(key).trim()
+      if (value) body.style.setProperty(`${key.replace('--dsw-static-', '--wp-accent-base-')}`, value)
+    }
+    body.dataset.wpAccentCaptured = '1'
+  } catch {
+    // 非关键增强（仅主色调跟随需要），环境不支持时静默跳过
   }
-  body.dataset.wpAccentCaptured = '1'
 }
 
 let lastAutoTextDark = false

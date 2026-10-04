@@ -88,6 +88,8 @@ function retag(): boolean {
   frame.setAttribute('data-wp-frame', '')
   sidebar.setAttribute('data-wp-sidebar', '')
   center.setAttribute('data-wp-center', '')
+  // 内联 !important：压过壳/其他插件对该令牌的任何元素级声明
+  center.style.setProperty(CENTER_TOKEN, 'var(--wp-center-bg, transparent)', 'important')
   return true
 }
 
@@ -99,11 +101,16 @@ function getComputedStyleSafe(el: HTMLElement): string {
   }
 }
 
+/** 主列元素可能被壳自身/其他插件以元素级规则改写 bg-base 令牌（如 rc.2 桌面
+ * 材质的 25% 白釉），样式表覆盖不可靠；改用内联 !important（作者级最高）。 */
+const CENTER_TOKEN = '--dsw-alias-bg-base'
+
 function clearTags(): void {
   for (const el of document.querySelectorAll('[data-wp-frame],[data-wp-sidebar],[data-wp-center]')) {
     el.removeAttribute('data-wp-frame')
     el.removeAttribute('data-wp-sidebar')
     el.removeAttribute('data-wp-center')
+    if (isElement(el)) el.style.removeProperty(CENTER_TOKEN)
   }
 }
 
@@ -196,6 +203,7 @@ export function applySettings(s: WallpaperSettings): void {
     body.style.removeProperty('--wp-frost')
     body.style.removeProperty('--wp-text-color-current')
     for (const k of ['sidebar', 'topbar', 'main', 'right', 'cards']) body.style.removeProperty(`--wp-op-${k}`)
+    clearTags()
     return
   }
   body.setAttribute('data-wp-active', '')
