@@ -42,7 +42,12 @@ export const GLOBAL_CSS = /* css */ `
    壁纸激活时 frame 永远放行；各列由 data-wp-t-* 开关逐个放行。 */
 
 body[data-wp-active] {
-  --wp-op: 70;
+  /* 逐组件表面不透明度（0–100，surface.ts 按设置内联写入） */
+  --wp-op-sidebar: 70;
+  --wp-op-topbar: 70;
+  --wp-op-main: 0;
+  --wp-op-right: 0;
+  --wp-op-cards: 70;
   --wp-tint-mix: 0%;
   --wp-tint: transparent;
   /* 侧栏填充与背景基底的原始静态值按主题冻结（design-platform.css）：
@@ -53,7 +58,8 @@ body[data-wp-active] {
   --wp-base-solid: var(--dsw-static-neutral-bluish-00, #fafbfc);
   /* 色调跟随直接烘进填充色（与卡片同法），对内部自绘组件透明生效 */
   --wp-sidebar-tinted: color-mix(in srgb, var(--wp-tint) var(--wp-tint-mix), var(--wp-sidebar-solid));
-  --wp-surface-fill: color-mix(in srgb, var(--wp-sidebar-tinted) calc(var(--wp-op) * 1%), transparent);
+  --wp-surface-fill: color-mix(in srgb, var(--wp-sidebar-tinted) calc(var(--wp-op-sidebar) * 1%), transparent);
+  --wp-topbar-fill: color-mix(in srgb, var(--wp-sidebar-tinted) calc(var(--wp-op-topbar) * 1%), transparent);
 
   /* ===== 全局语义 token 重定义（核心机制，不依赖 DOM 打标） =====
      在 body 上重定义，所有消费方（AppFrame 各列、SidebarRoot 等）经继承级联
@@ -62,6 +68,11 @@ body[data-wp-active] {
      暗色值，且 theme-presenter 会内联写 token——不加会被暗色模式压回不透明。 */
   --dsw-specific-sidebar-fill: var(--wp-surface-fill) !important;
   --dsw-alias-bg-base: transparent !important;
+  --wp-glass-a: calc(var(--wp-op-cards) * 0.01);
+  --wp-glass-mult: 1;
+  --wp-floor: 0.2;
+  --wp-floor-eff: calc(var(--wp-floor) * var(--wp-op-cards) * 0.01);
+  --wp-glass-tint: #ffffff;
 }
 
 body[data-wp-active][data-ds-dark-theme] {
@@ -75,6 +86,8 @@ body[data-wp-active] [data-wp-frame] {
 
 /* ===== 表面质感：毛玻璃 / 液态玻璃 =====
    质感作用于前景 UI（输入框卡、新对话 hero、设置面板与卡片），不作用于整片背景列。
+   [data-composer-card] 为壳原生属性（构建可存活）；模糊由 ::before 伪元素承载，
+   伪元素没有 DOM 后代，不会成为 fixed 后代的包含块。 */
    实现参照通用做法：质感主要是「令牌源头」的玻璃配方（见下方 layer-1/2/3 等），
    类名哈希会随壳前端重建失效，故元素选择器只用于少数稳定锚点：
    [data-composer-card] 为壳原生属性（构建可存活）；模糊由 ::before 伪元素承载，
@@ -109,20 +122,33 @@ body[data-wp-active][data-wp-finish='liquid'] [data-composer-card] {
     inset 0 1px 0 rgb(255 255 255 / 0.12) !important;
 }
 
-/* ===== 逐组件"恢复不透明"（开关关闭时；打标为尽力而为，失败仅该区域保持透明） =====
-   token 重定义同样带 !important：元素级 !important 在级联上仍胜过 body 级 !important。 */
+/* ===== 逐组件开关与独立不透明度 =====
+   开关开启：该区域按各自不透明度绘制（主内容/右栏为打标元素级重定义，依赖结构识别，
+   失败时保持全局透明——宁可可见壁纸）；开关关闭：恢复官方不透明底色。
+   token 重定义带 !important：元素级 !important 在级联上仍胜过 body 级 !important。 */
 body[data-wp-active]:not([data-wp-t-sidebar='1']) [data-wp-sidebar] {
   --dsw-specific-sidebar-fill: var(--wp-sidebar-solid) !important;
   background: var(--wp-sidebar-solid) !important;
 }
+body[data-wp-active][data-wp-t-topbar='1'] [data-wp-frame]::before {
+  background: var(--wp-topbar-fill) !important;
+}
 body[data-wp-active]:not([data-wp-t-topbar='1']) [data-wp-frame]::before {
   background: var(--wp-sidebar-solid) !important;
+}
+body[data-wp-active][data-wp-t-main='1'] [data-wp-center] {
+  --dsw-alias-bg-base: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-op-main) * 1%), transparent) !important;
+  background: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-op-main) * 1%), transparent) !important;
 }
 body[data-wp-active]:not([data-wp-t-main='1']) [data-wp-center] {
   --dsw-alias-bg-base: var(--wp-base-solid) !important;
   background: var(--wp-base-solid) !important;
 }
 /* 右栏有官方稳定属性 data-rightbar-col，无需打标 */
+body[data-wp-active][data-wp-t-rightbar='1'] [data-rightbar-col] {
+  --dsw-alias-bg-base: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-op-right) * 1%), transparent) !important;
+  background: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-op-right) * 1%), transparent) !important;
+}
 body[data-wp-active]:not([data-wp-t-rightbar='1']) [data-rightbar-col] {
   --dsw-alias-bg-base: var(--wp-base-solid) !important;
   background: var(--wp-base-solid) !important;
@@ -136,13 +162,6 @@ body[data-wp-active]:not([data-wp-t-rightbar='1']) [data-rightbar-col] {
    输入框卡（input-major）= 1.1，消息气泡（bubble）= 1.0。
    设置卡 fill 链到 layer-2，自动生效。代码块底刻意不接管（shiki 配色可读性）。
    暗色下玻璃色（白色釉面）权重按主题降档。 */
-body[data-wp-active] {
-  --wp-glass-a: calc(var(--wp-op) * 0.01);
-  --wp-glass-mult: 1;
-  --wp-floor: 0.2;
-  --wp-floor-eff: calc(var(--wp-floor) * var(--wp-op) * 0.01);
-  --wp-glass-tint: #ffffff;
-}
 body[data-wp-active][data-ds-dark-theme] {
   --wp-glass-mult: 0.45;
 }

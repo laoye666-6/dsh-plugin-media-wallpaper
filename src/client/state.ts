@@ -22,6 +22,15 @@ export interface TransparencyToggles {
   cards: boolean
 }
 
+/** 逐组件表面不透明度（0=完全透明，100=完全不透明），键与 TransparencyToggles 一致。 */
+export interface ComponentOpacities {
+  sidebar: number
+  topbar: number
+  main: number
+  rightbar: number
+  cards: number
+}
+
 export interface WallpaperSettings {
   /** 总开关；无壁纸媒体时整体视为未激活 */
   enabled: boolean
@@ -48,8 +57,8 @@ export interface WallpaperSettings {
   frostStrength: number
   /** 逐组件透明开关 */
   transparent: TransparencyToggles
-  /** 透明表面的不透明度百分比（30–100，数值越小越透明） */
-  surfaceOpacity: number
+  /** 逐组件表面不透明度（开关开启时生效） */
+  opacity: ComponentOpacities
 }
 
 export const DEFAULT_SETTINGS: WallpaperSettings = {
@@ -73,7 +82,13 @@ export const DEFAULT_SETTINGS: WallpaperSettings = {
     rightbar: true,
     cards: true,
   },
-  surfaceOpacity: 70,
+  opacity: {
+    sidebar: 70,
+    topbar: 70,
+    main: 0,
+    rightbar: 0,
+    cards: 70,
+  },
 }
 
 const STORAGE_KEY = 'dsh-plugin-media-wallpaper.settings.v1'
@@ -111,7 +126,17 @@ function revive(raw: unknown): WallpaperSettings {
     base.transparent.rightbar = bool(raw.transparent.rightbar, base.transparent.rightbar)
     base.transparent.cards = bool(raw.transparent.cards, base.transparent.cards)
   }
-  base.surfaceOpacity = num(raw.surfaceOpacity, base.surfaceOpacity, 0, 100)
+  if (isRecord(raw.opacity)) {
+    base.opacity.sidebar = num(raw.opacity.sidebar, base.opacity.sidebar, 0, 100)
+    base.opacity.topbar = num(raw.opacity.topbar, base.opacity.topbar, 0, 100)
+    base.opacity.main = num(raw.opacity.main, base.opacity.main, 0, 100)
+    base.opacity.rightbar = num(raw.opacity.rightbar, base.opacity.rightbar, 0, 100)
+    base.opacity.cards = num(raw.opacity.cards, base.opacity.cards, 0, 100)
+  } else if (typeof raw.surfaceOpacity === 'number') {
+    // 旧版迁移：单一表面不透明度 → 五个组件各自继承
+    const legacy = num(raw.surfaceOpacity, 70, 0, 100)
+    base.opacity = { sidebar: legacy, topbar: legacy, main: legacy, rightbar: legacy, cards: legacy }
+  }
   return base
 }
 
@@ -160,6 +185,11 @@ export function setTransparency(partial: Partial<TransparencyToggles>): void {
 /** 不变更数据、仅触发一次订阅通知（异步装载媒体后刷新 UI 用）。 */
 export function notify(): void {
   for (const listener of listeners) listener()
+}
+
+/** 修改某几个组件的表面不透明度。 */
+export function setOpacity(partial: Partial<ComponentOpacities>): void {
+  set({ opacity: { ...getSnapshot().opacity, ...partial } })
 }
 
 export function resetAll(): void {

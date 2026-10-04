@@ -192,6 +192,7 @@ export function applySettings(s: WallpaperSettings): void {
     body.removeAttribute('data-wp-active')
     body.removeAttribute('data-wp-finish')
     body.style.removeProperty('--wp-frost')
+    for (const k of ['sidebar', 'topbar', 'main', 'right', 'cards']) body.style.removeProperty(`--wp-op-${k}`)
     return
   }
   body.setAttribute('data-wp-active', '')
@@ -204,10 +205,20 @@ export function applySettings(s: WallpaperSettings): void {
   body.setAttribute('data-wp-tint', s.tintFollow ? '1' : '0')
   body.setAttribute('data-wp-finish', s.finish)
   body.style.setProperty('--wp-frost', `${Math.round(s.frostStrength)}px`)
+  // 逐组件表面不透明度
+  body.style.setProperty('--wp-op-sidebar', String(Math.round(s.opacity.sidebar)))
+  body.style.setProperty('--wp-op-topbar', String(Math.round(s.opacity.topbar)))
+  body.style.setProperty('--wp-op-main', String(Math.round(s.opacity.main)))
+  body.style.setProperty('--wp-op-right', String(Math.round(s.opacity.rightbar)))
+  body.style.setProperty('--wp-op-cards', String(Math.round(s.opacity.cards)))
 
-  // 系统级"减弱透明度"偏好：把不透明度抬到 90 以上，尊重可达性设置
+  // 系统级"减弱透明度"偏好：把各区域不透明度抬到 90 以上，尊重可达性设置
   const reduced = safeMatchMedia('(prefers-reduced-transparency: reduce)')?.matches ?? false
-  const op = reduced ? Math.max(s.surfaceOpacity, 90) : s.surfaceOpacity
-  body.style.setProperty('--wp-op', String(op))
+  const lift = (v: number): number => (reduced ? Math.max(v, 90) : v)
+  body.style.setProperty('--wp-op-sidebar', String(lift(Math.round(s.opacity.sidebar))))
+  body.style.setProperty('--wp-op-topbar', String(lift(Math.round(s.opacity.topbar))))
+  body.style.setProperty('--wp-op-main', String(lift(Math.round(s.opacity.main))))
+  body.style.setProperty('--wp-op-right', String(lift(Math.round(s.opacity.rightbar))))
+  body.style.setProperty('--wp-op-cards', String(lift(Math.round(s.opacity.cards))))
   body.style.setProperty('--wp-tint-mix', s.tintFollow ? `${Math.round(s.tintStrength)}%` : '0%')
 }

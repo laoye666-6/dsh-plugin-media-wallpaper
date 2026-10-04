@@ -40,6 +40,8 @@ const STR = {
     finishLiquid: '液态玻璃',
     frostStrength: '玻璃强度',
     finishHint: '作用于输入框、新对话与设置面板等前景 UI；背景模糊请用高斯模糊滑杆',
+    opacityHint: '开关控制该区域是否透出壁纸，滑杆单独调节各自的不透明度',
+    opaque: '不透明',
     transparency: '组件透明化',
     tSidebar: '侧栏',
     tTopbar: '顶栏 / 标题栏',
@@ -76,6 +78,8 @@ const STR = {
     finishLiquid: 'Liquid glass',
     frostStrength: 'Glass strength',
     finishHint: 'Applies to composer, hero and settings panels; use Gaussian blur for the background',
+    opacityHint: 'Toggle whether a region shows the wallpaper; each slider adjusts its own opacity',
+    opaque: 'Opaque',
     transparency: 'Component transparency',
     tSidebar: 'Sidebar',
     tTopbar: 'Top bar / title bar',
@@ -311,61 +315,40 @@ export function WallpaperSection(): ReactNode {
 
       <div className="wp-card">
         <span className="wp-title">{t.transparency}</span>
-        <div className="wp-grid2">
-          <label className="wp-check">
+        <div className="wp-hint">{t.opacityHint}</div>
+        {(
+          [
+            ['sidebar', t.tSidebar],
+            ['topbar', t.tTopbar],
+            ['main', t.tMain],
+            ['rightbar', t.tRightbar],
+            ['cards', t.tCards],
+          ] as const
+        ).map(([key, label]) => (
+          <div className="wp-row" key={key}>
+            <label className="wp-check">
+              <input
+                type="checkbox"
+                checked={s.transparent[key]}
+                onChange={(e) => state.setTransparency({ [key]: e.target.checked })}
+              />
+              <span>{label}</span>
+            </label>
             <input
-              type="checkbox"
-              checked={s.transparent.sidebar}
-              onChange={(e) => state.setTransparency({ sidebar: e.target.checked })}
+              className="wp-range"
+              style={{ maxWidth: 150 }}
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              value={s.opacity[key]}
+              onChange={(e) => state.setOpacity({ [key]: Number(e.target.value) })}
             />
-            <span>{t.tSidebar}</span>
-          </label>
-          <label className="wp-check">
-            <input
-              type="checkbox"
-              checked={s.transparent.topbar}
-              onChange={(e) => state.setTransparency({ topbar: e.target.checked })}
-            />
-            <span>{t.tTopbar}</span>
-          </label>
-          <label className="wp-check">
-            <input
-              type="checkbox"
-              checked={s.transparent.main}
-              onChange={(e) => state.setTransparency({ main: e.target.checked })}
-            />
-            <span>{t.tMain}</span>
-          </label>
-          <label className="wp-check">
-            <input
-              type="checkbox"
-              checked={s.transparent.rightbar}
-              onChange={(e) => state.setTransparency({ rightbar: e.target.checked })}
-            />
-            <span>{t.tRightbar}</span>
-          </label>
-          <label className="wp-check">
-            <input
-              type="checkbox"
-              checked={s.transparent.cards}
-              onChange={(e) => state.setTransparency({ cards: e.target.checked })}
-            />
-            <span>{t.tCards}</span>
-          </label>
-        </div>
-        <div className="wp-range-row">
-          <span>{t.surfaceOpacity}</span>
-          <input
-            className="wp-range"
-            type="range"
-            min={0}
-            max={100}
-            step={5}
-            value={s.surfaceOpacity}
-            onChange={(e) => state.set({ surfaceOpacity: Number(e.target.value) })}
-          />
-          <span className="wp-value">{s.surfaceOpacity}%</span>
-        </div>
+            <span className="wp-value" style={{ width: 40, textAlign: 'right' }}>
+              {s.transparent[key] ? `${s.opacity[key]}%` : t.opaque}
+            </span>
+          </div>
+        ))}
       </div>
 
       <div className="wp-row">
