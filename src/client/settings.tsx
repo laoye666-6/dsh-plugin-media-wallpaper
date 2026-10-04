@@ -66,6 +66,7 @@ const STR = {
     tMain: '主内容区',
     tRightbar: '右栏',
     tCards: '卡片与面板',
+    tComposer: '输入栏',
     surfaceOpacity: '表面不透明度',
     videoTileNote: '视频平铺不支持，将按「填满」处理',
     unsupported: '不支持的文件格式：',
@@ -119,6 +120,7 @@ const STR = {
     tMain: 'Main content',
     tRightbar: 'Right bar',
     tCards: 'Cards & panels',
+    tComposer: 'Input bar',
     surfaceOpacity: 'Surface opacity',
     videoTileNote: 'Tiling is unavailable for video; falls back to cover',
     unsupported: 'Unsupported file format: ',
@@ -498,6 +500,7 @@ export function WallpaperSection(): ReactNode {
             ['main', t.tMain],
             ['rightbar', t.tRightbar],
             ['cards', t.tCards],
+            ['composer', t.tComposer],
           ] as const
         ).map(([key, label]) => (
           <div className="wp-row" key={key}>

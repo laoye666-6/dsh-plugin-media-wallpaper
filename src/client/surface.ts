@@ -185,6 +185,7 @@ export function stop(): void {
     body.removeAttribute('data-wp-t-main')
     body.removeAttribute('data-wp-t-rightbar')
     body.removeAttribute('data-wp-t-cards')
+    body.removeAttribute('data-wp-t-composer')
     body.removeAttribute('data-wp-tint')
   }
   fallback = false
@@ -202,7 +203,7 @@ export function applySettings(s: WallpaperSettings): void {
     body.removeAttribute('data-wp-accent')
     body.style.removeProperty('--wp-frost')
     body.style.removeProperty('--wp-text-color-current')
-    for (const k of ['sidebar', 'topbar', 'main', 'right', 'cards']) body.style.removeProperty(`--wp-op-${k}`)
+    for (const k of ['sidebar', 'topbar', 'main', 'right', 'cards', 'composer']) body.style.removeProperty(`--wp-op-${k}`)
     clearTags()
     return
   }
@@ -213,6 +214,7 @@ export function applySettings(s: WallpaperSettings): void {
   body.setAttribute('data-wp-t-main', t.main ? '1' : '0')
   body.setAttribute('data-wp-t-rightbar', t.rightbar ? '1' : '0')
   body.setAttribute('data-wp-t-cards', t.cards ? '1' : '0')
+  body.setAttribute('data-wp-t-composer', t.composer ? '1' : '0')
   body.setAttribute('data-wp-tint', s.tintFollow ? '1' : '0')
   body.setAttribute('data-wp-finish', s.finish)
   body.setAttribute('data-wp-text', s.textColorMode)
@@ -226,6 +228,7 @@ export function applySettings(s: WallpaperSettings): void {
   body.style.setProperty('--wp-op-main', String(Math.round(s.opacity.main)))
   body.style.setProperty('--wp-op-right', String(Math.round(s.opacity.rightbar)))
   body.style.setProperty('--wp-op-cards', String(Math.round(s.opacity.cards)))
+  body.style.setProperty('--wp-op-composer', String(Math.round(s.opacity.composer)))
 
   // 系统级"减弱透明度"偏好：把各区域不透明度抬到 90 以上，尊重可达性设置
   const reduced = safeMatchMedia('(prefers-reduced-transparency: reduce)')?.matches ?? false
@@ -235,5 +238,6 @@ export function applySettings(s: WallpaperSettings): void {
   body.style.setProperty('--wp-op-main', String(lift(Math.round(s.opacity.main))))
   body.style.setProperty('--wp-op-right', String(lift(Math.round(s.opacity.rightbar))))
   body.style.setProperty('--wp-op-cards', String(lift(Math.round(s.opacity.cards))))
+  body.style.setProperty('--wp-op-composer', String(lift(Math.round(s.opacity.composer))))
   body.style.setProperty('--wp-tint-mix', s.tintFollow ? `${Math.round(s.tintStrength)}%` : '0%')
 }

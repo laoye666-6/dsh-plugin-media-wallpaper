@@ -48,6 +48,7 @@ body[data-wp-active] {
   --wp-op-main: 0;
   --wp-op-right: 0;
   --wp-op-cards: 70;
+  --wp-op-composer: 30;
   --wp-tint-mix: 0%;
   --wp-tint: transparent;
   /* 侧栏填充与背景基底的原始静态值按主题冻结（design-platform.css）：
@@ -225,8 +226,18 @@ body[data-wp-active][data-wp-t-cards='1'] {
   --dsw-alias-bg-layer-2: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 1 * var(--wp-glass-mult) * 100%), transparent) calc((1 - var(--wp-floor-eff)) * 100%)) !important;
   --dsw-alias-bg-layer-3: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 1.1 * var(--wp-glass-mult) * 100%), transparent) calc((1 - var(--wp-floor-eff)) * 100%)) !important;
   --dsw-alias-button-elevated-fill: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 1.15 * var(--wp-glass-mult) * 100%), transparent) calc((1 - var(--wp-floor-eff)) * 100%)) !important;
-  --dsw-specific-input-major: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 1.1 * var(--wp-glass-mult) * 100%), transparent) calc((1 - var(--wp-floor-eff)) * 100%)) !important;
   --dsw-specific-bubble: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 1 * var(--wp-glass-mult) * 100%), transparent) calc((1 - var(--wp-floor-eff)) * 100%)) !important;
+  /* 悬停高亮随卡片设置切换（插件管理页行悬停等所有 interactive-hover 消费方） */
+  --dsw-alias-interactive-bg-hover: color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 100%), transparent) !important;
+}
+
+/* 输入栏：独立开关与不透明度（--wp-op-composer），与卡片面板解耦 */
+body[data-wp-active] {
+  --wp-glass-a-c: calc(var(--wp-op-composer) * 0.01);
+  --wp-floor-eff-c: calc(var(--wp-floor) * var(--wp-glass-a-c));
+}
+body[data-wp-active][data-wp-t-composer='1'] {
+  --dsw-specific-input-major: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff-c) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a-c) * 1.1 * var(--wp-glass-mult) * 100%), transparent) calc((1 - var(--wp-floor-eff-c)) * 100%)) !important;
 }
 
 /* 色调跟随：侧栏/右栏用负 z-index 叠层（画在自身背景之上、内容之下）。 */
