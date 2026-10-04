@@ -428,6 +428,48 @@ body[data-wp-active][data-wp-fallback='1'] {
 .wp-mini-btn:hover {
   filter: brightness(1.1);
 }
+/* 一键应用按钮与进度条 */
+.wp-preset-apply {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 0.86em;
+}
+.wp-preset-apply:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.wp-progress {
+  position: relative;
+  height: 16px;
+  border-radius: var(--dsw-radius-sm, 8px);
+  background: var(--dsw-alias-bg-mask-2, rgba(0, 0, 0, 0.12));
+  overflow: hidden;
+}
+.wp-progress-bar {
+  height: 100%;
+  background: var(--dsw-static-blue-500, #4176e6);
+  opacity: 0.75;
+  transition: width 0.15s ease;
+}
+.wp-progress-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72em;
+  color: var(--dsw-alias-label-primary, inherit);
+  font-variant-numeric: tabular-nums;
+}
+/* 手动下载折叠区 */
+.wp-preset-manual {
+  font-size: 0.86em;
+}
+.wp-preset-manual-summary {
+  cursor: pointer;
+  color: var(--dsw-alias-label-secondary, inherit);
+  padding: 2px 0;
+}
 `
 
 /** 注入全局样式（幂等）。样式标签带 data-plugin 归属标记。 */

@@ -7,7 +7,7 @@
  * 文案按 html.lang 内置 zh-CN / en 两套。
  */
 
-import { useState, useSyncExternalStore } from 'react'
+import { useState, useSyncExternalStore, useRef } from 'react'
 import type { ReactNode, ChangeEvent } from 'react'
 import type { SlotComponentProps, ClientContext } from './types'
 import { PLUGIN_PKG, PLUGIN_VERSION } from './identity'
@@ -15,6 +15,8 @@ import { PRESETS } from './presets-data.gen'
 import * as state from './state'
 import { ACCEPT_ATTR, detectFormat } from './format'
 import { putMedia, deleteMedia, currentObjectUrl } from './storage'
+import { fetchPresetMedia } from './presets'
+import type { PresetProgress } from './presets'
 
 const STR = {
   zh: {
@@ -25,7 +27,11 @@ const STR = {
     download: '下载',
     copyLink: '复制链接',
     copied: '已复制 ✓',
-    presetsHint: '每卷提供 GitHub 直连 / 国内 jsDelivr 两种下载；分卷壁纸下载全部分卷后合并解压',
+    presetsHint: '一键应用由插件自动完成下载、合并与解压；也可手动下载留档',
+    apply: '一键应用',
+    applying: '处理中…',
+    manualDownload: '手动下载',
+    applyFailed: '应用失败：',
     picked: '当前壁纸',
     none: '未设置（支持 GIF / APNG / 动图 WebP / PNG / JPEG / MP4 / WebM）',
     clear: '清除壁纸',
@@ -69,7 +75,11 @@ const STR = {
     download: 'Download',
     copyLink: 'Copy link',
     copied: 'Copied ✓',
-    presetsHint: 'Each part offers GitHub direct and jsDelivr (CN) downloads; multi-part archives must be merged before extracting',
+    presetsHint: 'One-click applies downloads, merges and extracts automatically; manual download is also available',
+    apply: 'Apply',
+    applying: 'Working…',
+    manualDownload: 'Manual download',
+    applyFailed: 'Apply failed: ',
     picked: 'Current wallpaper',
     none: 'Not set (GIF / APNG / animated WebP / PNG / JPEG / MP4 / WebM)',
     clear: 'Clear wallpaper',
@@ -165,8 +175,46 @@ export function WallpaperSection(): ReactNode {
   const s = useSyncExternalStore(state.subscribe, state.getSnapshot)
   const t = useStrings()
   const [error, setError] = useState('')
+  const [applying, setApplying] = useState('')
+  const [progress, setProgress] = useState<PresetProgress | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
   const hasMedia = s.mediaId !== null
   const thumb = hasMedia ? currentObjectUrl() : null
+
+  /** 一键应用：下载 → 合并分卷 → 解压 → 写入媒体库 → 立即生效。 */
+  async function applyPreset(p: (typeof PRESETS)[number]): Promise<void> {
+    if (applying) return
+    setError('')
+    setApplying(p.id)
+    setProgress({ phase: 'downloading', ratio: 0 })
+    const controller = new AbortController()
+    abortRef.current = controller
+    try {
+      const { blob, fileName } = await fetchPresetMedia(p, setProgress, controller.signal)
+      const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `wp-${Date.now().toString(36)}`
+      const prev = state.getSnapshot().mediaId
+      await putMedia({ id, blob, mime: p.mime, name: fileName, addedAt: Date.now() })
+      if (prev && prev !== id) void deleteMedia(prev)
+      state.set({
+        mediaId: id,
+        mediaType: p.kind,
+        formatLabel: p.mime === 'image/jpeg' ? 'JPEG' : 'MP4',
+        mediaName: p.name,
+        enabled: true,
+      })
+      setProgress({ phase: 'done', ratio: 1 })
+    } catch (err) {
+      if (!controller.signal.aborted) {
+        setError(String(err instanceof Error ? err.message : err))
+      }
+    } finally {
+      setApplying('')
+      abortRef.current = null
+      setTimeout(() => setProgress(null), 1200)
+    }
+  }
 
   return (
     <section className="wp-section">
@@ -220,20 +268,40 @@ export function WallpaperSection(): ReactNode {
                   <img className="wp-preset-thumb" src={p.thumb} alt={p.name} />
                   <span className="wp-preset-name" title={p.name}>{p.name}</span>
                   <span className="wp-preset-size">{p.kind === 'video' ? '▶ ' : ''}{p.sizeLabel}</span>
-                  <div className="wp-preset-actions">
-                    {p.downloads.map((d) => (
-                      <div className="wp-preset-dl" key={d.label}>
-                        <span className="wp-preset-dl-label">{d.label}</span>
-                        <button type="button" className="wp-mini-btn" onClick={() => window.open(d.github, '_blank')}>
-                          GitHub
-                        </button>
-                        <button type="button" className="wp-mini-btn" onClick={() => window.open(d.cdn, '_blank')}>
-                          国内
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  {p.hint ? <div className="wp-hint">{p.hint}</div> : null}
+                  <button
+                    type="button"
+                    className="wp-btn wp-preset-apply"
+                    disabled={applying !== ''}
+                    onClick={() => void applyPreset(p)}
+                  >
+                    {applying === p.id ? t.applying : t.apply}
+                  </button>
+                  {applying === p.id && progress ? (
+                    <div className="wp-progress">
+                      <div className="wp-progress-bar" style={{ width: `${Math.round(progress.ratio * 100)}%` }} />
+                      <span className="wp-progress-text">
+                        {progress.phase === 'downloading' ? `${Math.round(progress.ratio * 100)}%` : ''}
+                        {progress.detail ? ` ${progress.detail}` : ''}
+                      </span>
+                    </div>
+                  ) : null}
+                  <details className="wp-preset-manual">
+                    <summary className="wp-preset-manual-summary">{t.manualDownload}</summary>
+                    <div className="wp-preset-actions">
+                      {p.downloads.map((d) => (
+                        <div className="wp-preset-dl" key={d.label}>
+                          <span className="wp-preset-dl-label">{d.label}</span>
+                          <button type="button" className="wp-mini-btn" onClick={() => window.open(d.github, '_blank')}>
+                            GitHub
+                          </button>
+                          <button type="button" className="wp-mini-btn" onClick={() => window.open(d.cdn, '_blank')}>
+                            国内
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    {p.hint ? <div className="wp-hint">{p.hint}</div> : null}
+                  </details>
                 </div>
               ))}
             </div>
