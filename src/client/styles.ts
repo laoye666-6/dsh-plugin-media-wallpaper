@@ -102,6 +102,9 @@ body[data-wp-active][data-wp-finish='liquid'] [data-composer-card]::before {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
+  /* 下沉到内容之下：定位的 ::before 否则会盖住卡片内非定位内容（左下角 + 按钮等），
+     isolation 把 -1 层锁在卡片自己的层叠上下文里，不会滑到壁纸后面 */
+  z-index: -1;
   background-color: var(--wp-composer-fill, transparent);
   backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.35);
   -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.35);
@@ -120,10 +123,12 @@ body[data-wp-active][data-wp-finish='liquid'] [class*="_navCell"] {
       rgb(255 255 255 / 0.1)
     ) !important;
 }
-/* 玻璃态下输入框卡自身填充透明（玻璃层在 ::before 上）——消除"异常边界" */
+/* 玻璃态下输入框卡自身填充透明（玻璃层在 ::before 上）——消除"异常边界"；
+   isolation 让 ::before 的 -1 层不出卡片层叠上下文 */
 body[data-wp-active][data-wp-finish='frosted'] [data-composer-card],
 body[data-wp-active][data-wp-finish='liquid'] [data-composer-card] {
   position: relative;
+  isolation: isolate;
   border-color: transparent !important;
   box-shadow: none !important;
   background: transparent !important;

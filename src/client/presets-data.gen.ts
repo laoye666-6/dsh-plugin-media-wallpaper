@@ -34,7 +34,7 @@ export const PRESETS: PresetEntry[] = [
       {
         "label": "下载",
         "github": "https://raw.githubusercontent.com/laoye666-6/dsh-plugin-media-wallpaper/main/presets/miku-city.jpg",
-        "cdn": "https://cdn.jsdelivr.net/gh/laoye666-6/dsh-plugin-media-wallpaper@v0.2.8/presets/miku-city.jpg"
+        "cdn": "https://cdn.jsdelivr.net/gh/laoye666-6/dsh-plugin-media-wallpaper@v0.2.9/presets/miku-city.jpg"
       }
     ]
   },
@@ -50,7 +50,7 @@ export const PRESETS: PresetEntry[] = [
       {
         "label": "下载",
         "github": "https://raw.githubusercontent.com/laoye666-6/dsh-plugin-media-wallpaper/main/presets/parts/mizu-1080p.zip.001",
-        "cdn": "https://cdn.jsdelivr.net/gh/laoye666-6/dsh-plugin-media-wallpaper@v0.2.8/presets/parts/mizu-1080p.zip.001"
+        "cdn": "https://cdn.jsdelivr.net/gh/laoye666-6/dsh-plugin-media-wallpaper@v0.2.9/presets/parts/mizu-1080p.zip.001"
       }
     ]
   },
@@ -66,17 +66,17 @@ export const PRESETS: PresetEntry[] = [
       {
         "label": "卷 1",
         "github": "https://raw.githubusercontent.com/laoye666-6/dsh-plugin-media-wallpaper/main/presets/parts/hatsune-2k.zip.001",
-        "cdn": "https://cdn.jsdelivr.net/gh/laoye666-6/dsh-plugin-media-wallpaper@v0.2.8/presets/parts/hatsune-2k.zip.001"
+        "cdn": "https://cdn.jsdelivr.net/gh/laoye666-6/dsh-plugin-media-wallpaper@v0.2.9/presets/parts/hatsune-2k.zip.001"
       },
       {
         "label": "卷 2",
         "github": "https://raw.githubusercontent.com/laoye666-6/dsh-plugin-media-wallpaper/main/presets/parts/hatsune-2k.zip.002",
-        "cdn": "https://cdn.jsdelivr.net/gh/laoye666-6/dsh-plugin-media-wallpaper@v0.2.8/presets/parts/hatsune-2k.zip.002"
+        "cdn": "https://cdn.jsdelivr.net/gh/laoye666-6/dsh-plugin-media-wallpaper@v0.2.9/presets/parts/hatsune-2k.zip.002"
       },
       {
         "label": "卷 3",
         "github": "https://raw.githubusercontent.com/laoye666-6/dsh-plugin-media-wallpaper/main/presets/parts/hatsune-2k.zip.003",
-        "cdn": "https://cdn.jsdelivr.net/gh/laoye666-6/dsh-plugin-media-wallpaper@v0.2.8/presets/parts/hatsune-2k.zip.003"
+        "cdn": "https://cdn.jsdelivr.net/gh/laoye666-6/dsh-plugin-media-wallpaper@v0.2.9/presets/parts/hatsune-2k.zip.003"
       }
     ]
   }
