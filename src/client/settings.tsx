@@ -67,6 +67,7 @@ const STR = {
     tRightbar: '右栏',
     tCards: '卡片与面板',
     tComposer: '输入栏',
+    tPlugins: '插件卡片',
     surfaceOpacity: '表面不透明度',
     videoTileNote: '视频平铺不支持，将按「填满」处理',
     unsupported: '不支持的文件格式：',
@@ -121,6 +122,7 @@ const STR = {
     tRightbar: 'Right bar',
     tCards: 'Cards & panels',
     tComposer: 'Input bar',
+    tPlugins: 'Plugin cards',
     surfaceOpacity: 'Surface opacity',
     videoTileNote: 'Tiling is unavailable for video; falls back to cover',
     unsupported: 'Unsupported file format: ',
@@ -500,6 +502,7 @@ export function WallpaperSection(): ReactNode {
             ['main', t.tMain],
             ['rightbar', t.tRightbar],
             ['cards', t.tCards],
+            ['plugins', t.tPlugins],
             ['composer', t.tComposer],
           ] as const
         ).map(([key, label]) => (

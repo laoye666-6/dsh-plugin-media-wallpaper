@@ -48,6 +48,7 @@ body[data-wp-active] {
   --wp-op-main: 0;
   --wp-op-right: 0;
   --wp-op-cards: 70;
+  --wp-op-plugins: 50;
   --wp-op-composer: 30;
   --wp-tint-mix: 0%;
   --wp-tint: transparent;
@@ -131,6 +132,40 @@ body[data-wp-active][data-wp-finish='frosted'] [data-composer-card] *,
 body[data-wp-active][data-wp-finish='liquid'] [data-composer-card] * {
   border-color: transparent !important;
   outline: none !important;
+}
+
+/* ===== 插件卡片：独立开关与不透明度（--wp-op-plugins）=====
+   锚点 [class*="_cardLink"] 为插件管理页插件卡专用局部名（fO69Vq 前缀哈希
+   随构建变化，后缀稳定）。毛玻璃/液态玻璃各自叠加 backdrop-filter；悬停
+   用更强玻璃替代官方 interactive-bg-hover（避免被 !important 填充抹掉）。 */
+body[data-wp-active] {
+  --wp-glass-a-p: calc(var(--wp-op-plugins) * 0.01);
+  --wp-floor-eff-p: calc(var(--wp-floor) * var(--wp-glass-a-p));
+}
+body[data-wp-active][data-wp-t-plugins='1'] [class*="_cardLink"] {
+  background: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff-p) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a-p) * 100%), transparent) calc((1 - var(--wp-floor-eff-p)) * 100%)) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+body[data-wp-active][data-wp-t-plugins='1'] [class*="_cardLink"]:hover {
+  background: color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a-p) * 1.35 * 100%), transparent) !important;
+}
+body[data-wp-active][data-wp-t-plugins='1'][data-wp-finish='frosted'] [class*="_cardLink"] {
+  backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.35);
+  -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.35);
+}
+body[data-wp-active][data-wp-t-plugins='1'][data-wp-finish='liquid'] [class*="_cardLink"] {
+  backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.7) brightness(1.05);
+  -webkit-backdrop-filter: blur(var(--wp-frost, 14px)) saturate(1.7) brightness(1.05);
+  background-image: linear-gradient(
+      135deg,
+      rgb(255 255 255 / 0.14),
+      rgb(255 255 255 / 0.03) 45%,
+      rgb(255 255 255 / 0.1)
+    ) !important;
+  box-shadow:
+    inset 0 0 0 0.5px rgb(255 255 255 / 0.2),
+    inset 0 1px 0 rgb(255 255 255 / 0.12) !important;
 }
 
 /* ===== 设置模态面板整体玻璃化 =====

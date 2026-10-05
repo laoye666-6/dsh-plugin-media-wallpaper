@@ -20,6 +20,8 @@ export interface TransparencyToggles {
   rightbar: boolean
   /** 卡片面板（--dsw-alias-bg-layer-1/2/3 消费方，含设置卡、输入区等） */
   cards: boolean
+  /** 插件卡片（插件管理页的插件卡，独立于卡片面板） */
+  plugins: boolean
   /** 输入栏（composer 输入框卡，独立于卡片面板） */
   composer: boolean
 }
@@ -31,6 +33,7 @@ export interface ComponentOpacities {
   main: number
   rightbar: number
   cards: number
+  plugins: number
   composer: number
 }
 
@@ -94,6 +97,7 @@ export const DEFAULT_SETTINGS: WallpaperSettings = {
     main: true,
     rightbar: true,
     cards: true,
+    plugins: true,
     composer: true,
   },
   opacity: {
@@ -102,6 +106,7 @@ export const DEFAULT_SETTINGS: WallpaperSettings = {
     main: 0,
     rightbar: 0,
     cards: 70,
+    plugins: 50,
     composer: 30,
   },
 }
@@ -148,6 +153,7 @@ function revive(raw: unknown): WallpaperSettings {
     base.transparent.main = bool(raw.transparent.main, base.transparent.main)
     base.transparent.rightbar = bool(raw.transparent.rightbar, base.transparent.rightbar)
     base.transparent.cards = bool(raw.transparent.cards, base.transparent.cards)
+    base.transparent.plugins = bool(raw.transparent.plugins, base.transparent.plugins)
     base.transparent.composer = bool(raw.transparent.composer, base.transparent.composer)
   }
   if (isRecord(raw.opacity)) {
@@ -156,11 +162,12 @@ function revive(raw: unknown): WallpaperSettings {
     base.opacity.main = num(raw.opacity.main, base.opacity.main, 0, 100)
     base.opacity.rightbar = num(raw.opacity.rightbar, base.opacity.rightbar, 0, 100)
     base.opacity.cards = num(raw.opacity.cards, base.opacity.cards, 0, 100)
+    base.opacity.plugins = num(raw.opacity.plugins, base.opacity.plugins, 0, 100)
     base.opacity.composer = num(raw.opacity.composer, base.opacity.composer, 0, 100)
   } else if (typeof raw.surfaceOpacity === 'number') {
     // 旧版迁移：单一表面不透明度 → 各组件各自继承
     const legacy = num(raw.surfaceOpacity, 70, 0, 100)
-    base.opacity = { sidebar: legacy, topbar: legacy, main: legacy, rightbar: legacy, cards: legacy, composer: legacy }
+    base.opacity = { sidebar: legacy, topbar: legacy, main: legacy, rightbar: legacy, cards: legacy, plugins: legacy, composer: legacy }
   }
   return base
 }
