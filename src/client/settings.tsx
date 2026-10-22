@@ -17,10 +17,17 @@ import { ACCEPT_ATTR, detectFormat } from './format'
 import { putMedia, deleteMedia, currentObjectUrl } from './storage'
 import { fetchPresetMedia } from './presets'
 import type { PresetProgress } from './presets'
+import { previewIntro } from './intro'
+import { getThemePreference, setThemePreference, subscribeTheme, themeAvailable } from './theme'
 
 const STR = {
   zh: {
     title: '壁纸',
+    appearance: '主题',
+    themeLight: '浅色',
+    themeDark: '深色',
+    themeSystem: '跟随主题',
+    appearanceHint: '与 DSH 全局主题联动：这里切换等同 设置 → 通用设置 → 外观。',
     enabled: '启用壁纸背景',
     pick: '选择图片 / 视频',
     presets: '预置壁纸',
@@ -56,9 +63,11 @@ const STR = {
     textModeAuto: '自动',
     textModeCustom: '自定义',
     textColorPick: '选择颜色',
+    textAutoHint: '自动会分别给「直接透出壁纸的区域」和「卡片 / 气泡 / 输入框」选字色：前者按壁纸亮度配深字或浅字，后者沿用主题色（深色模式不会反成看不清的深字）。拖动亮度 / 压暗会实时重算。',
     accentAuto: '主色调跟随背景',
     finishHint: '作用于输入框、新对话与设置面板等前景 UI；背景模糊请用高斯模糊滑杆',
     opacityHint: '开关控制该区域是否透出壁纸，滑杆单独调节各自的不透明度',
+    transparencyHint: '顶栏 / 标题栏只作用于网页内的标题栏拖拽条；桌面窗口最上方的原生菜单栏与窗口按钮由桌面壳绘制，插件无法改变。侧栏 / 右栏的色调叠加会随各自不透明度一起淡出；按钮、气泡等属于「卡片与面板」。',
     opaque: '不透明',
     transparency: '组件透明化',
     tSidebar: '侧栏',
@@ -73,9 +82,26 @@ const STR = {
     unsupported: '不支持的文件格式：',
     loadFailed: '壁纸读取失败（浏览器存储可能已被清理）',
     needEnable: '选择壁纸后自动启用',
+    intro: '开屏动画（可选）',
+    introHint: '启动时先全屏播放一段动画，播完渐隐，露出聊天与壁纸。与壁纸是否启用互不影响。',
+    introEnabled: '启用开屏动画',
+    introPick: '选择动画文件',
+    introCurrent: '当前动画',
+    introNone: '未设置（视频 MP4 / WebM，或 GIF / 动图 WebP / APNG / 图片）',
+    introPreview: '预览播放',
+    introClear: '清除开屏动画',
+    introFade: '渐隐时长',
+    introHold: '图片停留',
+    introOnce: '同一会话只播一次',
+    introWaitBoot: '等开机动画结束后再播',
   },
   en: {
     title: 'Wallpaper',
+    appearance: 'Theme',
+    themeLight: 'Light',
+    themeDark: 'Dark',
+    themeSystem: 'Follow theme',
+    appearanceHint: 'Linked to the DSH global theme: switching here is the same as Settings → General → Appearance.',
     enabled: 'Enable wallpaper background',
     pick: 'Choose image / video',
     presets: 'Preset wallpapers',
@@ -111,9 +137,11 @@ const STR = {
     textModeAuto: 'Auto',
     textModeCustom: 'Custom',
     textColorPick: 'Pick color',
+    textAutoHint: 'Auto picks text colors per surface: regions that show the wallpaper directly get dark/light text based on wallpaper brightness, while cards, bubbles and the composer keep the theme text color (so dark mode never turns them into unreadable dark text). Moving brightness/dim recalculates live.',
     accentAuto: 'Accent follows background',
     finishHint: 'Applies to composer, hero and settings panels; use Gaussian blur for the background',
     opacityHint: 'Toggle whether a region shows the wallpaper; each slider adjusts its own opacity',
+    transparencyHint: 'Top bar / title bar only affects the in-page title-bar drag strip; the native window menu bar and window buttons are drawn by the desktop shell and cannot be changed by this plugin. The sidebar/right-bar tint fades with their own opacity; buttons and bubbles belong to "Cards & panels".',
     opaque: 'Opaque',
     transparency: 'Component transparency',
     tSidebar: 'Sidebar',
@@ -128,6 +156,18 @@ const STR = {
     unsupported: 'Unsupported file format: ',
     loadFailed: 'Failed to load wallpaper (browser storage may have been cleared)',
     needEnable: 'Picking a wallpaper enables it automatically',
+    intro: 'Intro animation (optional)',
+    introHint: 'Plays a fullscreen animation on startup, then fades out to reveal the chat and wallpaper. Independent of the wallpaper switch.',
+    introEnabled: 'Enable intro animation',
+    introPick: 'Choose animation file',
+    introCurrent: 'Current animation',
+    introNone: 'Not set (MP4 / WebM video, or GIF / animated WebP / APNG / image)',
+    introPreview: 'Preview',
+    introClear: 'Clear intro animation',
+    introFade: 'Fade duration',
+    introHold: 'Image hold',
+    introOnce: 'Play once per session',
+    introWaitBoot: 'Wait for the boot animation to finish',
   },
 } as const
 
@@ -167,6 +207,36 @@ function onClear(): void {
   state.set({ enabled: false, mediaId: null, mediaType: null, formatLabel: null, mediaName: null })
 }
 
+/** 选择开屏动画文件：与壁纸共用 IndexedDB 媒体库，但 id 独立、互不影响。 */
+async function onPickIntroFile(e: ChangeEvent<HTMLInputElement>, onError: (msg: string) => void): Promise<void> {
+  const file = e.target.files?.[0]
+  e.target.value = ''
+  if (!file) return
+  try {
+    const head = new Uint8Array(await file.slice(0, 65536).arrayBuffer())
+    const det = detectFormat(head)
+    if (!det) {
+      onError(file.name)
+      return
+    }
+    const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `wp-intro-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+    const prev = state.getSnapshot().intro.mediaId
+    await putMedia({ id, blob: file, mime: det.mime, name: file.name, addedAt: Date.now() })
+    if (prev && prev !== id) void deleteMedia(prev)
+    state.setIntro({ enabled: true, mediaId: id, mediaType: det.kind, formatLabel: det.label, mediaName: file.name })
+  } catch (err) {
+    console.warn('[dsh-plugin-media-wallpaper] intro pick failed', err)
+  }
+}
+
+function onClearIntro(): void {
+  const prev = state.getSnapshot().intro.mediaId
+  if (prev) void deleteMedia(prev)
+  state.setIntro({ enabled: false, mediaId: null, mediaType: null, formatLabel: null, mediaName: null })
+}
+
 /** 诊断行：截图排查用。展示打标状态、实际解析出的列背景与全局填充值。 */
 function Diagnostics(): ReactNode {
   const s = useSyncExternalStore(state.subscribe, state.getSnapshot)
@@ -187,6 +257,7 @@ function Diagnostics(): ReactNode {
 
 export function WallpaperSection(): ReactNode {
   const s = useSyncExternalStore(state.subscribe, state.getSnapshot)
+  const themePreference = useSyncExternalStore(subscribeTheme, getThemePreference)
   const t = useStrings()
   const [error, setError] = useState('')
   const [applying, setApplying] = useState('')
@@ -232,6 +303,34 @@ export function WallpaperSection(): ReactNode {
 
   return (
     <section className="wp-section">
+      {themeAvailable() ? (
+        <div className="wp-card">
+          <div className="wp-row">
+            <span className="wp-title">{t.appearance}</span>
+            <div className="wp-seg" role="radiogroup" aria-label={t.appearance}>
+              {(
+                [
+                  ['light', t.themeLight],
+                  ['dark', t.themeDark],
+                  ['system', t.themeSystem],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  className="wp-seg-btn"
+                  data-active={themePreference === id ? '1' : '0'}
+                  aria-pressed={themePreference === id}
+                  onClick={() => setThemePreference(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="wp-hint">{t.appearanceHint}</div>
+        </div>
+      ) : null}
       <div className="wp-card">
         <div className="wp-row">
           <div className="wp-row-main">
@@ -469,6 +568,7 @@ export function WallpaperSection(): ReactNode {
             ))}
           </div>
         </div>
+        {s.textColorMode === 'auto' ? <div className="wp-hint">{t.textAutoHint}</div> : null}
         {s.textColorMode === 'custom' ? (
           <div className="wp-row">
             <span>{t.textColorPick}</span>
@@ -488,6 +588,126 @@ export function WallpaperSection(): ReactNode {
               onChange={(e) => state.set({ accentAuto: e.target.checked })}
             />
             <span>{t.accentAuto}</span>
+          </label>
+        </div>
+      </div>
+
+      <div className="wp-card">
+        <div className="wp-row">
+          <div className="wp-row-main">
+            <span className="wp-title">{t.intro}</span>
+            <span className="wp-hint">{t.introHint}</span>
+          </div>
+          <label className="wp-check">
+            <input
+              type="checkbox"
+              checked={s.intro.enabled}
+              onChange={(e) => state.setIntro({ enabled: e.target.checked })}
+            />
+            <span>{t.introEnabled}</span>
+          </label>
+        </div>
+
+        <div className="wp-row">
+          <div className="wp-row-main">
+            <span>{t.introCurrent}</span>
+            <span className="wp-hint">
+              {s.intro.mediaName ?? t.introNone}
+              {s.intro.formatLabel ? <span className="wp-badge"> {s.intro.formatLabel}</span> : null}
+            </span>
+          </div>
+          <label className="wp-btn">
+            {t.introPick}
+            <input
+              type="file"
+              accept={ACCEPT_ATTR}
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                setError('')
+                void onPickIntroFile(e, setError)
+              }}
+            />
+          </label>
+        </div>
+
+        <div className="wp-row">
+          <button
+            type="button"
+            className="wp-btn"
+            disabled={!s.intro.enabled || s.intro.mediaId === null}
+            onClick={() => previewIntro()}
+          >
+            {t.introPreview}
+          </button>
+          {s.intro.mediaId !== null ? (
+            <button type="button" className="wp-btn wp-btn-danger" onClick={onClearIntro}>
+              {t.introClear}
+            </button>
+          ) : null}
+        </div>
+
+        <div className="wp-row">
+          <span>{t.fill}</span>
+          <select
+            className="wp-select"
+            value={s.intro.fit}
+            onChange={(e) => state.setIntro({ fit: e.target.value as state.FillMode })}
+          >
+            <option value="cover">{t.fillCover}</option>
+            <option value="contain">{t.fillContain}</option>
+            <option value="fill">{t.fillFill}</option>
+          </select>
+        </div>
+
+        <div className="wp-range-row">
+          <span>{t.introFade}</span>
+          <input
+            className="wp-range"
+            type="range"
+            min={100}
+            max={5000}
+            step={100}
+            value={s.intro.fadeMs}
+            onChange={(e) => state.setIntro({ fadeMs: Number(e.target.value) })}
+          />
+          <span className="wp-value">{s.intro.fadeMs}ms</span>
+        </div>
+
+        {s.intro.mediaType === 'image' ? (
+          <div className="wp-range-row">
+            <span>{t.introHold}</span>
+            <input
+              className="wp-range"
+              type="range"
+              min={500}
+              max={15000}
+              step={500}
+              value={s.intro.holdMs}
+              onChange={(e) => state.setIntro({ holdMs: Number(e.target.value) })}
+            />
+            <span className="wp-value">{(s.intro.holdMs / 1000).toFixed(1)}s</span>
+          </div>
+        ) : null}
+
+        <div className="wp-row">
+          <label className="wp-check">
+            <input
+              type="checkbox"
+              checked={s.intro.oncePerSession}
+              onChange={(e) => state.setIntro({ oncePerSession: e.target.checked })}
+            />
+            <span>{t.introOnce}</span>
+          </label>
+        </div>
+
+        <div className="wp-row">
+          <label className="wp-check">
+            <input
+              type="checkbox"
+              checked={s.intro.waitForBoot}
+              onChange={(e) => state.setIntro({ waitForBoot: e.target.checked })}
+            />
+            <span>{t.introWaitBoot}</span>
           </label>
         </div>
       </div>
@@ -530,6 +750,7 @@ export function WallpaperSection(): ReactNode {
             </span>
           </div>
         ))}
+        <div className="wp-hint">{t.transparencyHint}</div>
       </div>
 
       <div className="wp-row">

@@ -37,6 +37,46 @@ export interface ComponentOpacities {
   composer: number
 }
 
+/**
+ * 开屏动画（移植自 dsh-chat-wallpaper 的核心体验）：
+ * 启动时先全屏播放一段动画，播完渐隐，露出壁纸与聊天界面。
+ *
+ * 与"壁纸"相互独立：可以只开动画不设壁纸，反之亦然。
+ */
+export interface IntroSettings {
+  /** 总开关；没有媒体时整体视为未启用 */
+  enabled: boolean
+  /** IndexedDB 中的媒体 id（与壁纸共用媒体库） */
+  mediaId: string | null
+  mediaType: MediaType | null
+  /** 展示用：格式识别结果（GIF/APNG/动图 WebP/PNG/JPEG/MP4/WebM） */
+  formatLabel: string | null
+  mediaName: string | null
+  /** 播完后渐隐时长 ms（100–5000） */
+  fadeMs: number
+  /** 图片/动图停留时长 ms（视频播完即收；只对 image 生效，500–15000） */
+  holdMs: number
+  /** 同一浏览器会话只播一次（刷新不再重播） */
+  oncePerSession: boolean
+  /** 等开机动画开始收场再满不透明接上（交叉叠化，避免"闪一下"） */
+  waitForBoot: boolean
+  /** 填充方式（cover/contain/fill） */
+  fit: FillMode
+}
+
+export const DEFAULT_INTRO_SETTINGS: IntroSettings = {
+  enabled: false,
+  mediaId: null,
+  mediaType: null,
+  formatLabel: null,
+  mediaName: null,
+  fadeMs: 1200,
+  holdMs: 3000,
+  oncePerSession: true,
+  waitForBoot: true,
+  fit: 'cover',
+}
+
 export interface WallpaperSettings {
   /** 总开关；无壁纸媒体时整体视为未激活 */
   enabled: boolean
@@ -72,6 +112,8 @@ export interface WallpaperSettings {
   transparent: TransparencyToggles
   /** 逐组件表面不透明度（开关开启时生效） */
   opacity: ComponentOpacities
+  /** 开屏动画（与壁纸独立） */
+  intro: IntroSettings
 }
 
 export const DEFAULT_SETTINGS: WallpaperSettings = {
@@ -109,6 +151,7 @@ export const DEFAULT_SETTINGS: WallpaperSettings = {
     plugins: 50,
     composer: 30,
   },
+  intro: { ...DEFAULT_INTRO_SETTINGS },
 }
 
 const STORAGE_KEY = 'dsh-plugin-media-wallpaper.settings.v1'
@@ -119,7 +162,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 /** 宽松合并：容忍旧版本/损坏数据，缺失字段回落默认值。 */
 function revive(raw: unknown): WallpaperSettings {
-  const base: WallpaperSettings = { ...DEFAULT_SETTINGS, transparent: { ...DEFAULT_SETTINGS.transparent } }
+  const base: WallpaperSettings = {
+    ...DEFAULT_SETTINGS,
+    transparent: { ...DEFAULT_SETTINGS.transparent },
+    opacity: { ...DEFAULT_SETTINGS.opacity },
+    intro: { ...DEFAULT_SETTINGS.intro },
+  }
   if (!isRecord(raw)) return base
   const num = (v: unknown, fallback: number, min: number, max: number): number =>
     typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback
@@ -169,6 +217,19 @@ function revive(raw: unknown): WallpaperSettings {
     const legacy = num(raw.surfaceOpacity, 70, 0, 100)
     base.opacity = { sidebar: legacy, topbar: legacy, main: legacy, rightbar: legacy, cards: legacy, plugins: legacy, composer: legacy }
   }
+  if (isRecord(raw.intro)) {
+    const i = raw.intro
+    base.intro.enabled = bool(i.enabled, base.intro.enabled)
+    base.intro.mediaId = str(i.mediaId)
+    base.intro.mediaType = i.mediaType === 'image' || i.mediaType === 'video' ? i.mediaType : null
+    base.intro.formatLabel = str(i.formatLabel)
+    base.intro.mediaName = str(i.mediaName)
+    base.intro.fadeMs = num(i.fadeMs, base.intro.fadeMs, 100, 5000)
+    base.intro.holdMs = num(i.holdMs, base.intro.holdMs, 500, 15000)
+    base.intro.oncePerSession = bool(i.oncePerSession, base.intro.oncePerSession)
+    base.intro.waitForBoot = bool(i.waitForBoot, base.intro.waitForBoot)
+    if (i.fit === 'cover' || i.fit === 'contain' || i.fit === 'fill') base.intro.fit = i.fit
+  }
   return base
 }
 
@@ -177,7 +238,12 @@ function load(): WallpaperSettings {
     const raw = globalThis.localStorage?.getItem(STORAGE_KEY)
     return revive(raw ? JSON.parse(raw) : undefined)
   } catch {
-    return { ...DEFAULT_SETTINGS, transparent: { ...DEFAULT_SETTINGS.transparent } }
+    return {
+      ...DEFAULT_SETTINGS,
+      transparent: { ...DEFAULT_SETTINGS.transparent },
+      opacity: { ...DEFAULT_SETTINGS.opacity },
+      intro: { ...DEFAULT_SETTINGS.intro },
+    }
   }
 }
 
@@ -224,8 +290,18 @@ export function setOpacity(partial: Partial<ComponentOpacities>): void {
   set({ opacity: { ...getSnapshot().opacity, ...partial } })
 }
 
+/** 修改开屏动画设置（浅合并）。 */
+export function setIntro(partial: Partial<IntroSettings>): void {
+  set({ intro: { ...getSnapshot().intro, ...partial } })
+}
+
 export function resetAll(): void {
-  set({ ...DEFAULT_SETTINGS, transparent: { ...DEFAULT_SETTINGS.transparent } })
+  set({
+    ...DEFAULT_SETTINGS,
+    transparent: { ...DEFAULT_SETTINGS.transparent },
+    opacity: { ...DEFAULT_SETTINGS.opacity },
+    intro: { ...DEFAULT_SETTINGS.intro },
+  })
 }
 
 /** 无媒体时整体视为未激活。 */

@@ -180,6 +180,7 @@ export function stop(): void {
     const body = document.body
     body.removeAttribute('data-wp-fallback')
     body.removeAttribute('data-wp-active')
+    body.removeAttribute('data-wp-walltext')
     body.removeAttribute('data-wp-t-sidebar')
     body.removeAttribute('data-wp-t-topbar')
     body.removeAttribute('data-wp-t-main')
@@ -188,6 +189,9 @@ export function stop(): void {
     body.removeAttribute('data-wp-t-composer')
     body.removeAttribute('data-wp-t-plugins')
     body.removeAttribute('data-wp-tint')
+    body.style.removeProperty('--wp-text-on-wall')
+    body.style.removeProperty('--wp-tint-mix-sidebar')
+    body.style.removeProperty('--wp-tint-mix-right')
   }
   fallback = false
   retryIndex = 0
@@ -205,6 +209,8 @@ export function applySettings(s: WallpaperSettings): void {
     body.style.removeProperty('--wp-frost')
     body.style.removeProperty('--wp-text-color-current')
     for (const k of ['sidebar', 'topbar', 'main', 'right', 'cards', 'plugins', 'composer']) body.style.removeProperty(`--wp-op-${k}`)
+    body.style.removeProperty('--wp-tint-mix-sidebar')
+    body.style.removeProperty('--wp-tint-mix-right')
     clearTags()
     return
   }
@@ -244,4 +250,13 @@ export function applySettings(s: WallpaperSettings): void {
   body.style.setProperty('--wp-op-plugins', String(lift(Math.round(s.opacity.plugins))))
   body.style.setProperty('--wp-op-composer', String(lift(Math.round(s.opacity.composer))))
   body.style.setProperty('--wp-tint-mix', s.tintFollow ? `${Math.round(s.tintStrength)}%` : '0%')
+  // 侧栏/右栏的色调叠加层也要跟随各自不透明度：拖到 0 时叠加一起消失，
+  // 否则 0% 的侧栏仍会盖着一层 tint（看起来比主内容区暗）。
+  const regionTint = (transparent: boolean, opacity: number): string => {
+    if (!s.tintFollow) return '0%'
+    const factor = transparent ? Math.max(0, Math.min(100, opacity)) / 100 : 1
+    return `${Math.round(s.tintStrength * factor)}%`
+  }
+  body.style.setProperty('--wp-tint-mix-sidebar', regionTint(t.sidebar, s.opacity.sidebar))
+  body.style.setProperty('--wp-tint-mix-right', regionTint(t.rightbar, s.opacity.rightbar))
 }

@@ -35,6 +35,25 @@ export const GLOBAL_CSS = /* css */ `
   opacity: 0;
 }
 
+/* ===== 开屏动画层 =====
+   启动时全屏播放一段动画，播完渐隐露出壁纸与聊天（见 intro.ts）。
+   z-index 比开机动画（2147483000）低 10，让它的淡出自然叠化成本层的出场；
+   pointer-events:none —— 绝不吞点击。 */
+[data-wp-intro] {
+  position: fixed;
+  inset: 0;
+  z-index: 2147482990;
+  overflow: hidden;
+  pointer-events: none;
+  background: #000;
+}
+[data-wp-intro] video,
+[data-wp-intro] img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 /* ===== 每组件透明化 =====
    AppFrame（packages/client/ui-layout）：
    - .frame / .centerCol / .rightbarCol / .bottomRow 消费 --dsw-alias-bg-base
@@ -187,14 +206,42 @@ body[data-wp-active][data-wp-t-cards='1']:not([data-wp-finish='none']) [class*="
   background-color: color-mix(in srgb, var(--wp-base-solid) calc(var(--wp-floor-eff) * 100%), color-mix(in srgb, var(--wp-glass-tint) calc(var(--wp-glass-a) * 85%), transparent) calc((1 - var(--wp-floor-eff)) * 100%)) !important;
 }
 
-/* ===== 字体颜色（覆盖官方 label 令牌，压过主题与 presenter 内联写入） =====
-   auto：--wp-text-color-current 由取色亮度自动计算（亮壁纸配深字/暗壁纸配浅字）；
-   custom：使用用户选的颜色。 */
-body[data-wp-active][data-wp-text='auto'],
+/* ===== 字体颜色 =====
+   custom：用户自选一个颜色，全局覆盖（这是用户明确的单一颜色选择）。
+   auto：**不做全局反色** —— 只给"真的透出壁纸的区域"上壁纸适配色；
+         卡片、气泡、输入框、弹层等自有表面保留 DSH 主题语义色
+         （深色模式自动浅字、浅色主题自动深字，和它们的玻璃底色匹配）。
+   旧实现拿"卡片玻璃"的亮度算一个全局颜色，深色模式/暗壁纸下会
+   让主聊天区（完全透明、文字直接压在壁纸上）变成深字贴深壁纸，看不清。 */
 body[data-wp-active][data-wp-text='custom'] {
   --dsw-alias-label-primary: var(--wp-text-color-current, #f5f6f7) !important;
   --dsw-alias-label-secondary: color-mix(in srgb, var(--wp-text-color-current, #f5f6f7) 78%, transparent) !important;
   --dsw-alias-label-tertiary: color-mix(in srgb, var(--wp-text-color-current, #f5f6f7) 58%, transparent) !important;
+}
+body[data-wp-active][data-wp-text='auto'] {
+  --wp-text-on-wall-secondary: color-mix(in srgb, var(--wp-text-on-wall, #f5f6f7) 85%, transparent);
+  --wp-text-on-wall-tertiary: color-mix(in srgb, var(--wp-text-on-wall, #f5f6f7) 70%, transparent);
+}
+body[data-wp-active][data-wp-text='auto'][data-wp-walltext~='main'] [data-wp-center],
+body[data-wp-active][data-wp-text='auto'][data-wp-walltext~='sidebar'] [data-wp-sidebar],
+body[data-wp-active][data-wp-text='auto'][data-wp-walltext~='rightbar'] [data-rightbar-col] {
+  --dsw-alias-label-primary: var(--wp-text-on-wall, #f5f6f7) !important;
+  --dsw-alias-label-secondary: var(--wp-text-on-wall-secondary) !important;
+  --dsw-alias-label-tertiary: var(--wp-text-on-wall-tertiary) !important;
+}
+/* 自有表面（有玻璃/实体底色的元素）：把字色还原成主题语义色。
+   --wp-label-theme-* 由 index.ts 在启动与主题切换时捕获（压过上面的壁纸字色）。 */
+body[data-wp-active][data-wp-text='auto'][data-wp-walltext] :is(
+  [data-composer-card],
+  [class*='_bubble'],
+  [class*='_cardLink'],
+  [class*='_panel'],
+  [class*='_newSession'],
+  [class*='_menu']
+) {
+  --dsw-alias-label-primary: var(--wp-label-theme-primary) !important;
+  --dsw-alias-label-secondary: var(--wp-label-theme-secondary) !important;
+  --dsw-alias-label-tertiary: var(--wp-label-theme-tertiary) !important;
 }
 
 /* ===== 主色调跟随背景：把壁纸主色混入官方强调色静态令牌 =====
@@ -297,13 +344,21 @@ body[data-wp-active] [data-wp-right] {
   position: relative;
   isolation: isolate;
 }
-body[data-wp-active][data-wp-tint='1'] [data-wp-sidebar]::before,
+body[data-wp-active][data-wp-tint='1'] [data-wp-sidebar]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  /* 侧栏的色调叠加随侧栏不透明度衰减（surface.ts 写入 --wp-tint-mix-sidebar） */
+  background: color-mix(in srgb, var(--wp-tint) var(--wp-tint-mix-sidebar, var(--wp-tint-mix)), transparent);
+  pointer-events: none;
+}
 body[data-wp-active][data-wp-tint='1'] [data-wp-right]::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: color-mix(in srgb, var(--wp-tint) var(--wp-tint-mix), transparent);
+  background: color-mix(in srgb, var(--wp-tint) var(--wp-tint-mix-right, var(--wp-tint-mix)), transparent);
   pointer-events: none;
 }
 
@@ -383,6 +438,7 @@ body[data-wp-active][data-wp-fallback='1'] {
   align-items: center;
   gap: 6px;
   cursor: pointer;
+  white-space: nowrap;
 }
 .wp-check input {
   accent-color: var(--dsw-static-blue-500, #4176e6);
@@ -400,6 +456,11 @@ body[data-wp-active][data-wp-fallback='1'] {
 }
 .wp-btn:hover {
   filter: brightness(1.06);
+}
+.wp-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  filter: none;
 }
 .wp-btn-danger {
   color: var(--dsw-static-red-500, #d5445c);

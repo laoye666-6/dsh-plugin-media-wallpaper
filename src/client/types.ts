@@ -32,9 +32,27 @@ export interface SlotsLike {
   register?(decl: SlotDeclaration, component: unknown): unknown
 }
 
+/** DSH 主题服务快照的最小面（ui-theme 的 `ctx.provide('theme', …)`）。 */
+export interface ThemeSnapshotLike {
+  /** 用户偏好：'light' | 'dark' | 'system' */
+  preference?: unknown
+  active?: { colorScheme?: unknown } | null
+  [key: string]: unknown
+}
+
+/** DSH 全局主题服务的最小面。 */
+export interface ThemeLike {
+  getTheme?(): ThemeSnapshotLike
+  setTheme?(id: string): void
+}
+
 /** 客户端 Cordis Context 的最小面：只声明本插件实际使用的能力。 */
 export interface ClientContext {
   slots?: SlotsLike
+  /** DSH 全局主题服务（ui-theme 提供） */
+  theme?: ThemeLike
+  /** Cordis 事件订阅（返回 disposer 时本插件会用它清理） */
+  on?(event: string, listener: (...args: unknown[]) => void): unknown
   /** Cordis 效果钩子：返回的清理函数在插件卸载时自动执行。 */
   effect?(fn: () => void | (() => void)): unknown
   /** 客户端日志（存在则用，避免插件把宿主控制台刷脏）。 */
